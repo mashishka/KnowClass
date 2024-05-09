@@ -12,6 +12,12 @@ from data_utils.imp.tables import Value
 # у значения фактора уникальные (в рамках одного фактора) - имя  и позиция
 @reraised_class()
 class ValueController:
+    # количество всех значений
+    @staticmethod
+    def get_count(db: DataBase) -> int:
+        with db.session as session:
+            return DataBase.get_count(session, Value)
+
     # получение всех значений по всем факторам
     @staticmethod
     def get_all(db: DataBase) -> list[ValueController]:

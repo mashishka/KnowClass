@@ -371,3 +371,35 @@ class TestEqual:
         assert ExampleController.get_by_position(
             new_db, example1.position
         ) == ExampleController.get_by_position(new_db, example1.position)
+
+
+class TestAllCount:
+    def test_get(self, new_db: DataBase):
+        examples_data = make_default_examples(new_db)
+
+        count = ExampleController.get_count(new_db)
+
+        assert count == len(examples_data)
+
+    def test_get_count_empty(self, new_db: DataBase):
+        count = ExampleController.get_count(new_db)
+
+        assert count == 0
+
+
+class TestValueCount:
+    def test_get(self, new_db: DataBase):
+        [weight, res_value, active, factor_values, example] = make_default_example(new_db).unpack()
+        count = example.get_values_count()
+
+        assert count == len(factor_values)
+
+    def test_get_empty(self, new_db: DataBase):
+        [value_name, value_text, value] = make_default_result_value(new_db).unpack()
+        weight = 0.5
+
+        example = ExampleController.make(new_db, weight, value)
+
+        count = example.get_values_count()
+
+        assert count == 0

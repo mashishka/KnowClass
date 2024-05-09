@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import TypeVar
+
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from data_utils.controllers.FactorController import FactorController
 from data_utils.controllers.ResultController import ResultController, ResultValueController
@@ -9,6 +12,8 @@ from data_utils.core import DataBase
 from data_utils.imp.position import TablePosition
 from data_utils.imp.rerased import reraised_class
 from data_utils.imp.tables import Example, ExampleFactorValue, Value
+
+_T = TypeVar("_T")
 
 
 # класс для работы с примерами
@@ -56,6 +61,12 @@ class ExampleController:
             session.delete(example)
             session.commit()
 
+    # количество примеров
+    @staticmethod
+    def get_count(db: DataBase) -> int:
+        with db.session as session:
+            return DataBase.get_count(session, Example)
+
     # получение всех примеров
     @staticmethod
     def get_all(db: DataBase) -> list[ExampleController]:
@@ -87,7 +98,7 @@ class ExampleController:
     @property
     def weight(self) -> float:
         with self._db.session as session:
-            return self.get_db_table(session).weight
+            return self.get_db_table_field(session, Example.weight)
 
     @weight.setter
     def weight(self, value: float) -> None:
@@ -135,7 +146,7 @@ class ExampleController:
     def result_value(self) -> ResultValueController:
         with self._db.session as session:
             db_result_value = DataBase.get_result_value_by_id(
-                session, self.get_db_table(session).result_value_id
+                session, self.get_db_table_field(session, Example.result_value_id)
             )
             return ResultController.get(self._db).get_value(db_result_value.name)
 
@@ -152,7 +163,7 @@ class ExampleController:
         with self._db.session as session:
             db_factor = factor.get_db_table(session)
             example_value = (
-                session.query(ExampleFactorValue)
+                session.query(ExampleFactorValue.example_id, ExampleFactorValue.value_id)
                 .filter_by(example_id=self._id)
                 .join(Value)
                 .filter(Value.factor_id == db_factor.factor_id)
@@ -191,6 +202,12 @@ class ExampleController:
             self._remove_value(session, factor.get_db_table(session).factor_id)
             session.commit()
 
+    # количество значений по факторам
+    def get_values_count(self) -> int:
+        with self._db.session as session:
+            example_id = self.get_db_table_field(session, Example.example_id)
+            return DataBase.get_count(session, ExampleFactorValue, {"example_id": example_id})
+
     # получение значений на всех факторах
     # NOTE: только те, не *
     def get_values(self) -> list[ValueController]:
@@ -221,6 +238,9 @@ class ExampleController:
 
     def get_db_table(self, session: Session) -> Example:
         return DataBase.get_example_by_id(session, self._id)
+
+    def get_db_table_field(self, session: Session, field: InstrumentedAttribute[_T]) -> _T:
+        return DataBase.get_example_filed_by_id(session, self._id, field)
 
     def _remove_value(self, session: Session, factor_id: int) -> None:
         example_value = (

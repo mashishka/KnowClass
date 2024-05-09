@@ -17,7 +17,7 @@ class ExamplesModel(QAbstractTableModel):
 
     def rowCount(self, parent=None):
         # examples count
-        return len(ExampleController.get_all(self._db))
+        return ExampleController.get_count(self._db)
 
     def columnCount(self, parent=None):
         # factors count + result + weight
@@ -51,6 +51,5 @@ class ExamplesModel(QAbstractTableModel):
             return QVariant("Weight")
         return None
 
-    # дорогой способ, мб стоит в бд сделать эффективнее...
     def _factors_count(self):
-        return len(FactorController.get_all(self._db))
+        return FactorController.get_count(self._db)

@@ -222,3 +222,17 @@ class TestEqual:
         assert result.get_value_by_position(value1.position) == result.get_value_by_position(
             value1.position
         )
+
+
+class TestValueCount:
+    def test_get(self, new_db: DataBase):
+        values_data = make_default_result_values(new_db)
+
+        count = ResultController.get(new_db).get_values_count()
+
+        assert count == len(values_data)
+
+    def test_get_count_empty(self, new_db: DataBase):
+        count = ResultController.get(new_db).get_values_count()
+
+        assert count == 0

@@ -83,12 +83,16 @@ class ResultController:
         return ResultValueController(self._db, name)
 
     # удаление значения результата по позиции
-    # TODO: тест
     def remove_value_by_position(self, position: int) -> None:
         with self._db.session as session:
             value = TablePosition.get_by_position(session, ResultValue, position)
             session.delete(value)
             session.commit()
+
+    # количество значений результата
+    def get_values_count(self) -> int:
+        with self._db.session as session:
+            return DataBase.get_count(session, ResultValue)
 
     # получение всех значений результата
     def get_values(self) -> list[ResultValueController]:

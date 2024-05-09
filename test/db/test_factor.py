@@ -267,3 +267,17 @@ class TestEqual:
         assert FactorController.get_by_position(
             new_db, factor1.position
         ) == FactorController.get_by_position(new_db, factor1.position)
+
+
+class TestAllCount:
+    def test_get(self, new_db: DataBase):
+        factors = make_default_factors(new_db)
+
+        count = FactorController.get_count(new_db)
+
+        assert count == len(factors)
+
+    def test_get_count_empty(self, new_db: DataBase):
+        count = FactorController.get_count(new_db)
+
+        assert count == 0

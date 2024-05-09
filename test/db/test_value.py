@@ -279,3 +279,37 @@ class TestEqual:
         assert factor.get_value_by_position(value1.position) == factor.get_value_by_position(
             value1.position
         )
+
+
+class TestInFactorCount:
+    def test_get(self, new_db: DataBase):
+        [factor_data, values_data] = make_default_factor_and_values(new_db)
+        factor = factor_data.factor
+
+        count = factor.get_values_count()
+
+        assert count == len(values_data)
+
+    def test_get_empty(self, new_db: DataBase):
+        [name, text, active, factor] = make_default_factor(new_db).unpack()
+
+        count = factor.get_values_count()
+
+        assert count == 0
+
+
+class TestAllCount:
+    def test_get(self, new_db: DataBase):
+        factors_and_values = make_default_factors_and_values(new_db)
+        added_count = 0
+        for factor_data, values in factors_and_values:
+            added_count += len(values)
+
+        count = ValueController.get_count(new_db)
+
+        assert count == added_count
+
+    def test_get_count_empty(self, new_db: DataBase):
+        count = ValueController.get_count(new_db)
+
+        assert count == 0

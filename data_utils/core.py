@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import re
 from pathlib import Path, PurePath
-from typing import Type, TypeVar
+from typing import Any, Type, TypeVar
 
 from sqlalchemy import MetaData, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from data_utils.imp.assert_scheme import assert_addition_data, assert_scheme
 from data_utils.imp.rerased import reraised_class
@@ -73,6 +74,14 @@ class DataBase:
         return self._sessions()
 
     @staticmethod
+    def get_count(
+        session: Session, table_type: Type[_T], filter_by_args: dict | None = None
+    ) -> int:
+        if filter_by_args is None:
+            return session.query(table_type).count()
+        return session.query(table_type).filter_by(**filter_by_args).count()
+
+    @staticmethod
     def get_all(session: Session, table_type: Type[_T]) -> list[_T]:
         return session.query(table_type).all()
 
@@ -117,3 +126,9 @@ class DataBase:
     @staticmethod
     def get_example_by_id(session: Session, example_id: int) -> Example:
         return session.query(Example).filter_by(example_id=example_id).one()
+
+    @staticmethod
+    def get_example_filed_by_id(
+        session: Session, example_id: int, field: InstrumentedAttribute[_T]
+    ) -> _T:
+        return session.query(field).filter_by(example_id=example_id).one()._tuple()[0]

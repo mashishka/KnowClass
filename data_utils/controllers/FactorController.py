@@ -43,13 +43,18 @@ class FactorController:
         return FactorController(db, name)
 
     # удаление по позиции
-    # TODO: тест
     @staticmethod
     def remove_by_position(db: DataBase, position: int) -> None:
         with db.session as session:
             factor = TablePosition.get_by_position(session, Factor, position)
             session.delete(factor)
             session.commit()
+
+    # количество факторов
+    @staticmethod
+    def get_count(db: DataBase) -> int:
+        with db.session as session:
+            return DataBase.get_count(session, Factor)
 
     # получение всех факторов
     @staticmethod
@@ -154,7 +159,6 @@ class FactorController:
         return ValueController(self._db, self.name, name)
 
     # получение значения фактора по позиции
-    # TODO: тест
     def remove_value_by_position(self, position: int) -> None:
         with self._db.session as session:
             factor = TablePosition.get_Value_by_position(
@@ -162,6 +166,12 @@ class FactorController:
             )
             session.delete(factor)
             session.commit()
+
+    # количество значений фактора
+    def get_values_count(self) -> int:
+        with self._db.session as session:
+            db_factor = self.get_db_table(session)
+            return DataBase.get_count(session, Value, {"factor_id": db_factor.factor_id})
 
     # получение всех значений фактора
     def get_values(self) -> list[ValueController]:

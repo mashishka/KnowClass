@@ -1,0 +1,5 @@
+greenlet==3.0.3
+SQLAlchemy==2.0.29
+SQLAlchemy-Utils==0.41.2
+typing_extensions==4.11.0
+pyqt5

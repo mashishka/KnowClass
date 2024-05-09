@@ -1,0 +1,17 @@
+{
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "editor.formatOnSave": true,
+
+    //https://github.com/microsoft/vscode-python/issues/6933
+    "isort.args": [
+        "--multi-line=3",
+        "--trailing-comma",
+        "--force-grid-wrap=0",
+        "--use-parentheses",
+        "--line-width=108", // 100 + 8
+    ]
+}

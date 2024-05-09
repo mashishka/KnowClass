@@ -1,0 +1,3 @@
+sqlacodegen==3.0.0rc5
+pytest
+coverage

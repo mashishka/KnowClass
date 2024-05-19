@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>882</width>
+    <height>508</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Tahoma</family>
+    <pointsize>12</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>2ndClass</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Определения</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QFrame" name="button_box">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <widget class="QPushButton" name="add_factor_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>20</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Добавить фактор</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="add_value_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>70</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Добавить значение</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="change_text_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>120</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Изменить текст</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="change_name_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>170</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Изменить имя</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="activate_factor_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>220</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Активировать</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="move_factor_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>270</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Переместить</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="delete_factor_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>320</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Удалить</string>
+             </property>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="table_box">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="0" column="0">
+              <widget class="QTableView" name="definition_table">
+               <property name="font">
+                <font>
+                 <family>Tahoma</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="verticalScrollMode">
+                <enum>QAbstractItemView::ScrollPerPixel</enum>
+               </property>
+               <property name="horizontalScrollMode">
+                <enum>QAbstractItemView::ScrollPerPixel</enum>
+               </property>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>true</bool>
+               </attribute>
+               <attribute name="verticalHeaderCascadingSectionResizes">
+                <bool>true</bool>
+               </attribute>
+               <attribute name="verticalHeaderDefaultSectionSize">
+                <number>31</number>
+               </attribute>
+               <attribute name="verticalHeaderStretchLastSection">
+                <bool>false</bool>
+               </attribute>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Примеры</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QFrame" name="exaple_button_box">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <widget class="QPushButton" name="add_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>20</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Добавить пример</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="clone_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>70</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Дублировать</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="change_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>120</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Изменить</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="activate_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>170</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Активировать</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="move_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>220</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Переместить</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="delete_example_button">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>270</y>
+               <width>151</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Удалить</string>
+             </property>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="example_table_box">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="0">
+              <widget class="QTableView" name="example_table">
+               <property name="font">
+                <font>
+                 <family>Tahoma</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="verticalScrollMode">
+                <enum>QAbstractItemView::ScrollPerPixel</enum>
+               </property>
+               <property name="horizontalScrollMode">
+                <enum>QAbstractItemView::ScrollPerPixel</enum>
+               </property>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>true</bool>
+               </attribute>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>Дерево</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QFrame" name="tree_button_box">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <widget class="QPushButton" name="pushButton_14">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>20</y>
+             <width>161</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Изменить правило</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButton_15">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>70</y>
+             <width>161</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Пометить пример</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="tree_box">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QFrame" name="frame">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QLabel" name="status_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>База знаний не задана</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="rebuild_tree_button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>175</width>
+                  <height>35</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Перестроить дерево</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="test_tree_button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Тест</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QTreeView" name="tree_view">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <family>Tahoma</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <attribute name="headerMinimumSectionSize">
+              <number>250</number>
+             </attribute>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>882</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Tahoma</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <widget class="QMenu" name="file_menu">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>Файл</string>
+    </property>
+    <widget class="QMenu" name="file_last_menu">
+     <property name="title">
+      <string>Последние</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="file_open_action"/>
+    <addaction name="file_create_action"/>
+    <addaction name="file_close_action"/>
+    <addaction name="file_save_action"/>
+    <addaction name="file_last_menu"/>
+    <addaction name="separator"/>
+    <addaction name="file_exit_action"/>
+   </widget>
+   <widget class="QMenu" name="help_menu">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>Справка</string>
+    </property>
+    <addaction name="help_about_action"/>
+   </widget>
+   <widget class="QMenu" name="consult_menu">
+    <property name="title">
+     <string>Консультация</string>
+    </property>
+    <addaction name="consult_run_action"/>
+   </widget>
+   <addaction name="file_menu"/>
+   <addaction name="consult_menu"/>
+   <addaction name="help_menu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="file_open_action">
+   <property name="text">
+    <string>Открыть</string>
+   </property>
+  </action>
+  <action name="file_create_action">
+   <property name="text">
+    <string>Создать</string>
+   </property>
+  </action>
+  <action name="file_exit_action">
+   <property name="text">
+    <string>Выход</string>
+   </property>
+  </action>
+  <action name="file_save_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="help_about_action">
+   <property name="text">
+    <string>О программе</string>
+   </property>
+  </action>
+  <action name="consult_run_action">
+   <property name="text">
+    <string>Начать консультацию</string>
+   </property>
+  </action>
+  <action name="file_close_action">
+   <property name="text">
+    <string>Закрыть</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -11,10 +11,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
 from data_utils.core import DataBase
-from data_utils.controllers.ExampleController import ExampleController
-from data_utils.controllers.FactorController import FactorController
-from data_utils.controllers.ResultController import ResultController
-from data_utils.controllers.ValueController import ValueController
 
 from pyui.ExamplesModel import ExamplesModel
 from pyui.FactorsModel import FactorsModel
@@ -46,7 +42,7 @@ class MainUI(QMainWindow):
     add_factor_button: QPushButton
     add_value_button: QPushButton
     change_text_button: QPushButton
-    change_name_button: QPushButton
+    # change_name_button: QPushButton
     activate_factor_button: QPushButton
     move_factor_button: QPushButton
     delete_factor_button: QPushButton
@@ -185,22 +181,12 @@ class MainUI(QMainWindow):
                 self, "Создать фактор", "Введите текст нового фактора:"
             )
             if done_t:
-                res = FactorController.make(self._data, name)
-                res.text = text
-
-                cur_ind = self.definition_table.currentIndex()
-                tmp_row, tmp_col = cur_ind.row(), cur_ind.column()
-                # TODO: невероятный костыль, сделать
-                # нормальное обновление количества столбцов при изменении в бд,
-                # а не полное переподключение моделей
-                self._update_models()
-                self.definition_table.setCurrentIndex(
-                    self.definition_table.model().createIndex(tmp_row, tmp_col)
-                )
+                mod = self.get_fact_model()
+                mod.add_factor(name, text)
             else:
                 QMessageBox.information(self, "Фактор", "Отмена")
         else:
-            QMessageBox.information(self, "Фактор", "Имя не выбрано")
+            pass
 
     # Добавить значение
     @pyqtSlot()
@@ -208,7 +194,8 @@ class MainUI(QMainWindow):
     def on_add_value(self):
         # TODO: сделать адаптивные названия у диалогов (в зависимости от выбора)
         ind = self.definition_table.currentIndex()
-        fact_cnt: int = FactorController.get_count(self._data)  # type: ignore
+        mod = self.get_fact_model()
+        fact_cnt = mod._factors_count()
         # =========================================================
         if ind.isValid() and ind.column() < fact_cnt:
             name, done = QInputDialog.getText(
@@ -221,22 +208,13 @@ class MainUI(QMainWindow):
                     "Введите текст нового значения фактора:",
                 )
                 if done_t:
-                    res = FactorController.get_by_position(self._data, ind.column())
-                    v_res = res.make_value(name)
-                    v_res.text = text
-
-                    cur_ind = self.definition_table.currentIndex()
-                    tmp_row, tmp_col = cur_ind.row(), cur_ind.column()
-                    # TODO: невероятный костыль аналогично
-                    self._update_models()
-                    # TODO: тоже костыль
-                    self.definition_table.setCurrentIndex(
-                        self.definition_table.model().createIndex(tmp_row, tmp_col)
-                    )
+                    mod.add_factor_value(name, text, ind.column())
                 else:
-                    QMessageBox.information(self, "Фактор", "Отмена")
+                    # QMessageBox.information(self, "Фактор", "Отмена")
+                    pass
             else:
-                QMessageBox.information(self, "Фактор", "Имя не выбрано")
+                # QMessageBox.information(self, "Фактор", "Имя не выбрано")
+                pass
         # =========================================================
         else:
             name, done = QInputDialog.getText(
@@ -249,14 +227,13 @@ class MainUI(QMainWindow):
                     "Введите текст нового значения результата:",
                 )
                 if done_t:
-                    res = ResultController.get(self._data).make_value(name)
-                    res.text = text
-                    # TODO: невероятный костыль аналогично
-                    self._update_models()
+                    mod.add_result_value(name, text)
                 else:
-                    QMessageBox.information(self, "Результат", "Отмена")
+                    # QMessageBox.information(self, "Результат", "Отмена")
+                    pass
             else:
-                QMessageBox.information(self, "Результат", "Имя не выбрано")
+                # QMessageBox.information(self, "Результат", "Имя не выбрано")
+                pass
 
     # Изменить текст
     @pyqtSlot()
@@ -265,10 +242,10 @@ class MainUI(QMainWindow):
         QMessageBox.information(self, "Изменить текст", "В разработке")
 
     # Изменить имя
-    @pyqtSlot()
-    @error_window
-    def on_change_name(self):
-        QMessageBox.information(self, "Изменить имя", "В разработке")
+    # @pyqtSlot()
+    # @error_window
+    # def on_change_name(self):
+    #     QMessageBox.information(self, "Изменить имя", "В разработке")
 
     # Активировать
     @pyqtSlot()
@@ -287,6 +264,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_delete_factor(self):
+        mod = self.get_fact_model()
         sel_mod = self.definition_table.selectionModel()
         col_ind_list = sel_mod.selectedColumns()
 
@@ -309,8 +287,7 @@ class MainUI(QMainWindow):
                 QMessageBox.Yes | QMessageBox.No,
             )
             if res_btn == QMessageBox.Yes:
-                for ind in reversed(col_ind_list):
-                    self.__delete_by_column(ind.column())
+                mod.delete_columns(col_ind_list)
             else:
                 return
         # =========================================================
@@ -331,34 +308,9 @@ class MainUI(QMainWindow):
                 QMessageBox.Yes | QMessageBox.No,
             )
             if res_btn == QMessageBox.Yes:
-                for ind in reversed(all_ind_list):
-                    self.__delete_by_index(ind)
+                mod.delete_values(all_ind_list)
             else:
                 return
-        self._update_models()
-
-    # удалить значения по индексам
-    def __delete_by_index(self, index: QModelIndex):
-        if index.column() < FactorController.get_count(self._data):  # type: ignore
-            # удалить значение фактора
-            factor = FactorController.get_by_position(self._data, index.column())  # type: ignore
-            if index.row() < factor.get_values_count():
-                factor.remove_value_by_position(index.row())  # type: ignore
-        else:
-            # удалить значение результата
-            res_contr = ResultController.get(self._data)  # type: ignore
-            if index.row() < res_contr.get_values_count():
-                res_contr.remove_value_by_position(index.row())  # type: ignore
-
-    # удалить столбцы по номеру
-    def __delete_by_column(self, col: int):
-        if col < FactorController.get_count(self._data):  # type: ignore
-            # удалить весь фактор
-            FactorController.remove_by_position(self._data, col)  # type: ignore
-        else:
-            # удалить все результаты
-            res_contr = ResultController.get(self._data)  # type: ignore
-            res_contr.remove_values()
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -367,7 +319,7 @@ class MainUI(QMainWindow):
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
 
-    # онтроль всех кнопок, кроме первой
+    # контроль всех кнопок, кроме первой
     @pyqtSlot(QModelIndex, QModelIndex)
     def on_ex_select(self, ind: QModelIndex, prev: QModelIndex):
         if ind.isValid():
@@ -381,18 +333,18 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_example(self):
-        res_contr = ResultController.get(self._data)
+        mod = self.get_ex_model()
+        lst = mod.get_list_res_val()
         name, done = QInputDialog.getItem(
             self,
             "Создать пример",
             "Выберите значение результата для примера:",
-            [res_val.name for res_val in res_contr.get_values()],
+            lst,
         )
         if done and name != "":
-            ExampleController.make(self._data, 1.0, res_contr.get_value(name))
+            mod.add_example(name)
         else:
             QMessageBox.information(self, "Результат", "Имя не выбрано")
-        self._update_models()
 
     # Дублировать
     @pyqtSlot()
@@ -404,31 +356,22 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_change_example(self):
+        mod = self.get_ex_model()
         cur_ind = self.example_table.currentIndex()
-        cur_ex = ExampleController.get_by_position(self._data, cur_ind.row())
-        f_cnt = FactorController.get_count(self._data)
+        f_cnt = mod._factors_count()
         # =========================================================
         if cur_ind.column() < f_cnt:
             # изменить значение фактора
-            factor = FactorController.get_by_position(self._data, cur_ind.column())
-            val_list: list[str] = []  # type: ignore
-            val_list.append("")
-            val_list += [res_val.name for res_val in factor.get_values()]
+            f_name, val_list = mod.get_list_fact_val(cur_ind.column())
             # TODO: в таких диалогах чекать возвращаемое имя -- он позволяет вернуть любую строку
             name, done = QInputDialog.getItem(
                 self,
-                f"Фактор {factor.name}",
+                f"Фактор {f_name}",
                 "Выберите значение фактора для примера:",
                 val_list,
             )
             if done:
-                if name == "":
-                    # выбрали "неважно" (*)
-                    if cur_ex.get_value(factor) is not None:
-                        cur_ex.remove_value(factor)
-                else:
-                    # выбрали значение фактора
-                    cur_ex.add_value(factor.get_value(name))
+                mod.change_factor_val(cur_ind.row(), f_name, name)
             else:
                 pass
         # =========================================================
@@ -444,21 +387,21 @@ class MainUI(QMainWindow):
                 decimals=2,
             )
             if done:
-                cur_ex.weight = weight
+                mod.change_ex_weight(cur_ind.row(), weight)
             else:
                 pass
         # =========================================================
         else:
             # изменить значение результата примера
-            res_contr = ResultController.get(self._data)
+            lst = mod.get_list_res_val()
             name, done = QInputDialog.getItem(
                 self,
                 f"Результат",
                 "Выберите значение результата для примера:",
-                [res_val.name for res_val in res_contr.get_values()],
+                lst,
             )
             if done:
-                cur_ex.result_value = res_contr.get_value(name)
+                mod.change_ex_result(cur_ind.row(), name)
             else:
                 pass
         # =========================================================
@@ -521,11 +464,10 @@ class MainUI(QMainWindow):
             QMessageBox.Yes | QMessageBox.No,
         )
         if res_btn == QMessageBox.Yes:
-            for ind in correct_ind_list:
-                ExampleController.remove_by_position(self._data, ind.row())
+            mod = self.get_ex_model()
+            mod.delete_examples(correct_ind_list)
         else:
             return
-        self._update_models()
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -549,7 +491,7 @@ class MainUI(QMainWindow):
         self.add_factor_button.clicked.connect(self.on_add_factor)
         self.add_value_button.clicked.connect(self.on_add_value)
         self.change_text_button.clicked.connect(self.on_change_text)
-        self.change_name_button.clicked.connect(self.on_change_name)
+        # self.change_name_button.clicked.connect(self.on_change_name)
         self.activate_factor_button.clicked.connect(self.on_activate_factor)
         self.move_factor_button.clicked.connect(self.on_move_factor)
         self.delete_factor_button.clicked.connect(self.on_delete_factor)
@@ -644,10 +586,19 @@ class MainUI(QMainWindow):
 
     # создать и подключить модели
     def _update_models(self):
+        # модели и коннекты к ним
+        modelf = FactorsModel(self._data)
+        modele = ExamplesModel(self._data)
+
+        # некоторые изменения в факторах влияют на примеры
+        modelf.sig_add_factor.connect(modele.on_add_factor)
+        modelf.sig_delete_factor.connect(modele.on_delete_factor)
+        modelf.sig_before_delete_result.connect(modele.on_before_delete)
+        modelf.sig_after_delete_result.connect(modele.on_after_delete)
+
         # таблица факторов
         self.definition_table.setModel(None)
-        model = FactorsModel(self._data)
-        self.definition_table.setModel(model)
+        self.definition_table.setModel(modelf)
         self.definition_table.selectionModel().currentChanged.connect(
             self.on_def_select
         )
@@ -655,8 +606,7 @@ class MainUI(QMainWindow):
 
         # таблица примеров
         self.example_table.setModel(None)
-        model = ExamplesModel(self._data)  # type: ignore
-        self.example_table.setModel(model)
+        self.example_table.setModel(modele)
         self.example_table.selectionModel().currentChanged.connect(self.on_ex_select)
         self._update_examples_buttons()
 
@@ -668,7 +618,7 @@ class MainUI(QMainWindow):
             for btn in self.__all_def_buttons():
                 btn.setEnabled(False)
         else:
-            for btn in self.__all_def_buttons([i for i in range(3, 8)]):
+            for btn in self.__all_def_buttons([i for i in range(3, 7)]):
                 btn.setEnabled(True)
 
     # получить список кнопок Определений
@@ -682,13 +632,13 @@ class MainUI(QMainWindow):
             lst.append(self.add_value_button)
         if 3 not in exclude_list:
             lst.append(self.change_text_button)
+        # if 4 not in exclude_list:
+        #     lst.append(self.change_name_button)
         if 4 not in exclude_list:
-            lst.append(self.change_name_button)
-        if 5 not in exclude_list:
             lst.append(self.activate_factor_button)
-        if 6 not in exclude_list:
+        if 5 not in exclude_list:
             lst.append(self.move_factor_button)
-        if 7 not in exclude_list:
+        if 6 not in exclude_list:
             lst.append(self.delete_factor_button)
 
         return lst
@@ -721,3 +671,9 @@ class MainUI(QMainWindow):
             lst.append(self.delete_example_button)
 
         return lst
+
+    def get_fact_model(self) -> FactorsModel:
+        return self.definition_table.model()  # type: ignore
+
+    def get_ex_model(self) -> ExamplesModel:
+        return self.example_table.model()  # type: ignore

@@ -1,4 +1,8 @@
+import sys
 from pathlib import Path
+
+# для запуска этого файла напрямую
+sys.path.append((Path().cwd() / ".").as_posix())
 
 from data_utils.controllers.ExampleController import ExampleController
 from data_utils.controllers.FactorController import FactorController
@@ -85,11 +89,14 @@ if __name__ == "__main__":
     print(example3 == example2)
     print(example3 == example3)
 
-    FactorController.remove_all(db)
+    print(FactorController.get_all(db))
 
-    # print(ValueController.get_all(db))
+    print(ValueController.get_all(db))
+    print(ExampleController.get_all(db))
+
     ResultController.get(db).remove_values()
+    FactorController.remove_all(db)
     print(TreeController.get(db).data)
     TreeController.get(db).data = "kekw".encode()
     print(TreeController.get(db).data)
-    # ExampleController.remove_all(db)
+    ExampleController.remove_all(db)

@@ -3,9 +3,10 @@ import sys
 
 from PyQt5 import QtWidgets
 
-from pyui.MainWindow import MainUI
+from ui.pyui.MainWindow import MainUI
 
 if __name__ == "__main__":
+
     # уровень логирования для приложения
     log.getLogger().setLevel(log.DEBUG)
     app = QtWidgets.QApplication(sys.argv)

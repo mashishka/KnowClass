@@ -24,13 +24,23 @@ class ResultController:
     @property
     def name(self) -> str:
         with self._db.session as session:
-            return self.get_db_table(session).result_name
+            return DataBase.get_field_by_id(
+                session,
+                AdditionalData,
+                self._id,
+                AdditionalData.result_name,
+            )
 
     # атрибут теста
     @property
     def text(self) -> str:
         with self._db.session as session:
-            return self.get_db_table(session).result_text
+            return DataBase.get_field_by_id(
+                session,
+                AdditionalData,
+                self._id,
+                AdditionalData.result_text,
+            )
 
     @text.setter
     def text(self, value: str) -> None:
@@ -44,7 +54,12 @@ class ResultController:
     @property
     def type(self) -> ResultMethodType | None:
         with self._db.session as session:
-            value = self.get_db_table(session).result_type
+            value = DataBase.get_field_by_id(
+                session,
+                AdditionalData,
+                self._id,
+                AdditionalData.result_type,
+            )
             if value is None:
                 return None
             return ResultMethodType(value)
@@ -63,7 +78,7 @@ class ResultController:
             value = ResultValue(name=name)
             session.add(value)
             session.commit()
-        return ResultValueController(self._db, name)
+            return ResultValueController(self._db, value.result_value_id)
 
     # получение значения результата по уникальному имени
     def get_value(self, name: str) -> ResultValueController:
@@ -79,8 +94,10 @@ class ResultController:
     # получение значения результата по позиции
     def get_value_by_position(self, position: int) -> ResultValueController:
         with self._db.session as session:
-            name = TablePosition.get_by_position(session, ResultValue, position).name
-        return ResultValueController(self._db, name)
+            result_value_id = TablePosition.get_field_by_position(
+                session, ResultValue, position, ResultValue.result_value_id
+            )
+            return ResultValueController(self._db, result_value_id)
 
     # удаление значения результата по позиции
     def remove_value_by_position(self, position: int) -> None:
@@ -97,25 +114,29 @@ class ResultController:
     # получение всех значений результата
     def get_values(self) -> list[ResultValueController]:
         with self._db.session as session:
-            raw = DataBase.get_result_values(session)
-        return [ResultValueController(self._db, val.name) for val in raw]
+            raw = DataBase.get_all_field(session, ResultValue.result_value_id)
+        return [ResultValueController(self._db, val) for val in raw]
 
     # удаление всех значений результата
     def remove_values(self) -> None:
         with self._db.session as session:
-            values = DataBase.get_result_values(session)
-            for value in values:
-                session.delete(value)
+            session.query(ResultValue).delete()
             session.commit()
 
     def __init__(self, db: DataBase) -> None:
         """Не использовать напрямую"""
 
         self._db = db
-
-        # check existance
-        with self._db.session as session:
-            self.get_db_table(session)
+        self.__id = None
+        # with self._db.session as session:
+        #     self._id = DataBase.get_additional_data_field(session, AdditionalData.id)
 
     def get_db_table(self, session: Session) -> AdditionalData:
-        return DataBase.get_addition_data(session)
+        return DataBase.get_table_by_id(session, AdditionalData, self._id)
+
+    @property
+    def _id(self):
+        if not self.__id:
+            with self._db.session as session:
+                self.__id = DataBase.get_additional_data_field(session, AdditionalData.id)
+        return self.__id

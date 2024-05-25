@@ -7,5 +7,12 @@ from sqlalchemy import Engine, event
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, SQLite3Connection):
         cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON;")
+        pragmas = [
+            "PRAGMA foreign_keys=ON;",
+            "PRAGMA synchronous=OFF;",
+            "PRAGMA temp_store = MEMORY;",
+            "PRAGMA journal_mode=MEMORY;",
+        ]
+        for pragma in pragmas:
+            cursor.execute(pragma)
         cursor.close()

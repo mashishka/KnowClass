@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Union
+
 from sqlalchemy.orm import Session
 
 from data_utils.core import DataBase
@@ -16,39 +18,25 @@ class ResultValueController:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ResultValueController):
             return False
-        return self._name == other._name
+        return self._id == other._id
 
     # атрибут имени (нельзя изменять)
     @property
     def name(self) -> str:
-        return self._name
+        with self._db.session as session:
+            return DataBase.get_field_by_id(session, ResultValue, self._id, ResultValue.name)
 
     # атрибут теста
     @property
     def text(self) -> str:
         with self._db.session as session:
-            return self.get_db_table(session).text_
+            return DataBase.get_field_by_id(session, ResultValue, self._id, ResultValue.text_)
 
     @text.setter
     def text(self, value: str) -> None:
         with self._db.session as session:
-            factor = self.get_db_table(session)
-            factor.text_ = value
-            session.commit()
-
-    # атрибут коэффициента правдоподобия
-    # NOTE: None == не указан
-    @property
-    def likelihood(self) -> float | None:
-        with self._db.session as session:
-            return self.get_db_table(session).likelihood
-
-    # NOTE: None == не указан
-    @likelihood.setter
-    def likelihood(self, value: float | None) -> None:
-        with self._db.session as session:
-            factor = self.get_db_table(session)
-            factor.likelihood = value
+            result_value = self.get_db_table(session)
+            result_value.text_ = value
             session.commit()
 
     # атрибут позиции
@@ -72,15 +60,15 @@ class ResultValueController:
             )
             session.commit()
 
-    def __init__(self, db: DataBase, name: str) -> None:
+    def __init__(self, db: DataBase, name_or_id: Union[str, int]) -> None:
         """Не использовать напрямую"""
 
         self._db = db
-        self._name = name
-
-        # check existance
-        with self._db.session as session:
-            self.get_db_table(session)
+        if isinstance(name_or_id, int):
+            self._id = name_or_id
+        else:
+            with self._db.session as session:
+                self._id = DataBase.get_result_value_by_name(session, name_or_id).result_value_id
 
     def get_db_table(self, session: Session) -> ResultValue:
-        return DataBase.get_result_value_by_name(session, self.name)
+        return DataBase.get_table_by_id(session, ResultValue, self._id)

@@ -13,21 +13,17 @@ class TreeController:
     def get(db: DataBase) -> TreeController:
         return TreeController(db)
 
-    def __init__(self, db: DataBase) -> None:
-        """Не использовать напрямую"""
-
-        self._db = db
-
-        # check existance
-        with self._db.session as session:
-            self.get_db_table(session)
-
     # байтовое представление дерева правил
     # NOTE: None == не задано
     @property
     def data(self) -> bytes | None:
         with self._db.session as session:
-            return self.get_db_table(session).tree_data
+            return DataBase.get_field_by_id(
+                session,
+                AdditionalData,
+                self._id,
+                AdditionalData.tree_data,
+            )
 
     # NOTE: None == не задано
     @data.setter
@@ -37,5 +33,12 @@ class TreeController:
             data.tree_data = value
             session.commit()
 
+    def __init__(self, db: DataBase) -> None:
+        """Не использовать напрямую"""
+
+        self._db = db
+        with self._db.session as session:
+            self._id = DataBase.get_additional_data_field(session, AdditionalData.id)
+
     def get_db_table(self, session: Session) -> AdditionalData:
-        return DataBase.get_addition_data(session)
+        return DataBase.get_table_by_id(session, AdditionalData, self._id)

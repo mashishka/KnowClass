@@ -1,7 +1,5 @@
 from random import shuffle
-
-import pytest
-from db.db_fixtures import (
+from test.db.db_fixtures import (
     default_value,
     make_default_factor,
     make_default_factor_and_values,
@@ -9,6 +7,8 @@ from db.db_fixtures import (
     make_default_factors_and_values,
     make_default_value,
 )
+
+import pytest
 
 from data_utils.controllers.FactorController import FactorController
 from data_utils.controllers.ValueController import ValueController
@@ -308,6 +308,16 @@ class TestAllCount:
         count = ValueController.get_count(new_db)
 
         assert count == added_count
+
+    def test_get_max(self, new_db: DataBase):
+        factors_and_values = make_default_factors_and_values(new_db)
+        max_c = 0
+        for factor_data, values in factors_and_values:
+            max_c = max(len(values), max_c)
+
+        max_c_get = FactorController.get_max_value_count(new_db)
+
+        assert max_c == max_c_get
 
     def test_get_count_empty(self, new_db: DataBase):
         count = ValueController.get_count(new_db)

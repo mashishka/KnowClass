@@ -1,7 +1,7 @@
 from random import shuffle
+from test.db.db_fixtures import make_default_result_value, make_default_result_values
 
 import pytest
-from db.db_fixtures import make_default_result_value, make_default_result_values
 
 from data_utils.controllers.ResultController import ResultController
 from data_utils.controllers.ResultValueController import ResultValueController
@@ -84,22 +84,6 @@ class TestText:
 
         value.text = "new_text"
         assert value.text == "new_text"
-
-
-class TestLikelihood:
-    def test_get(self, new_db: DataBase):
-        [value_name, value_text, value] = make_default_result_value(new_db).unpack()
-
-        assert value.likelihood == None
-
-    def test_set(self, new_db: DataBase):
-        [value_name, value_text, value] = make_default_result_value(new_db).unpack()
-
-        value.likelihood = 5.5
-        assert value.likelihood == 5.5
-
-        value.likelihood = None
-        assert value.likelihood == None
 
 
 class TestPosition:

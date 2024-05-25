@@ -1,1 +1,1 @@
-from db.db_fixtures import *
+from test.db.db_fixtures import *

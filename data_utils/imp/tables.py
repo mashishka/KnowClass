@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlalchemy import CheckConstraint, Enum, Float, ForeignKey, Integer, LargeBinary, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+
 class Base(DeclarativeBase):
     pass
 
@@ -16,6 +17,7 @@ class AdditionalData(Base):
     example_positions: Mapped[str] = mapped_column(Text, server_default=text('"[]"'))
     factor_positions: Mapped[str] = mapped_column(Text, server_default=text('"[]"'))
     result_value_positions: Mapped[str] = mapped_column(Text, server_default=text('"[]"'))
+    count: Mapped[str] = mapped_column(Text, server_default=text('\'{"values": {}, "factors": 0}\''))
     result_type: Mapped[Optional[str]] = mapped_column(Text, CheckConstraint("result_type in ('probability', 'confidence')"))
     tree_data: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
 
@@ -41,7 +43,6 @@ class ResultValue(Base):
     result_value_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(Text, unique=True)
     text_: Mapped[str] = mapped_column('text', Text, server_default=text('""'))
-    likelihood: Mapped[Optional[float]] = mapped_column(Float)
 
     Example: Mapped[List['Example']] = relationship('Example', back_populates='result_value', cascade="all, delete, delete-orphan")
 

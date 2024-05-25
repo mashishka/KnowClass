@@ -13,5 +13,6 @@
         "--force-grid-wrap=0",
         "--use-parentheses",
         "--line-width=108", // 100 + 8
-    ]
+    ],
+    "austin.interval": 10
 }

@@ -7,13 +7,11 @@ from data_utils.controllers.ExampleController import ExampleController
 from data_utils.controllers.FactorController import FactorController
 from data_utils.controllers.ResultController import ResultController
 from data_utils.core import DataBase
+from ui.pyui.SimpleGroupCache import SimpleGroupCache, cached
 
 # kek_counter: int = 0
 
 
-# NOTE: простая модель для примеров, может работать медленно
-# TODO: попробовать сделать кэширование (мб обновлять кэш по таймеру)
-# TODO: загружать названия столбцов один раз и использовать их
 class ExamplesModel(QAbstractTableModel):
     # промежуточная переменная на случай удаления столбца результатов (например)
     __start_row_count: int = 0
@@ -21,6 +19,32 @@ class ExamplesModel(QAbstractTableModel):
     def __init__(self, db: DataBase, parent=None):
         QAbstractTableModel.__init__(self, parent)
         self._db = db
+        self._cache = SimpleGroupCache()
+
+        # кеширование данных для интерфейса
+        self._display_data = cached(self._cache, "_display_data")(self._display_data)
+        self._display_header = cached(self._cache, "_display_horisontal_header")(
+            self._display_horisontal_header
+        )
+        self.rowCount = cached(self._cache, "rowCount")(self.rowCount)
+        self.columnCount = cached(self._cache, "columnCount")(self.columnCount)
+
+        # инвалидация кеша при изменении
+        # TODO: не только эти? (например, добавление, всякие изменения)
+        invalidate_signals = [
+            self.dataChanged,
+            self.headerDataChanged,
+            # self.sig_add_factor,
+            # self.sig_delete_factor,
+            # self.sig_delete_factor,
+            # self.sig_after_delete_result,
+        ]
+
+        def invalidate(*args, **kwargs):
+            self._cache.invalidate_all()
+
+        for signal in invalidate_signals:
+            signal.connect(invalidate)
 
     def rowCount(self, parent=None):
         # examples count
@@ -30,22 +54,36 @@ class ExamplesModel(QAbstractTableModel):
         # factors count + result + weight
         return self._factors_count() + 2
 
+    def _display_data(self, cached_index: tuple[int, int]) -> QVariant:
+        row, column = cached_index
+
+        columns = self._factors_count()
+        example = ExampleController.get_by_position(self._db, row)
+        if column < columns:
+            factor = FactorController.get_by_position(self._db, column)
+            value = example.get_value(factor)
+            return QVariant("*" if value is None else value.name)
+        if column == columns + 1:
+            return QVariant(example.result_value.name)
+        return QVariant(str(example.weight))
+
+    def _display_horisontal_header(self, cached_index: int):
+        col = cached_index
+
+        columns = self._factors_count()
+        if col < columns:
+            factor = FactorController.get_by_position(self._db, col)
+            return QVariant(factor.name)
+        if col == columns + 1:
+            return QVariant(self._res_controller().name)
+        return QVariant("Weight")
+
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
-            row = index.row()
-            column = index.column()
+            row, column = index.row(), index.column()
             # отображение
             if role == Qt.DisplayRole:
-                columns = self._factors_count()
-
-                example = ExampleController.get_by_position(self._db, row)
-                if column < columns:
-                    factor = FactorController.get_by_position(self._db, column)
-                    value = example.get_value(factor)
-                    return QVariant("*" if value is None else value.name)
-                if column == columns + 1:
-                    return QVariant(example.result_value.name)
-                return QVariant(str(example.weight))
+                return self._display_data(cached_index=(row, column))
             # выравнивание
             if role == Qt.TextAlignmentRole:
                 return Qt.AlignVCenter + Qt.AlignHCenter
@@ -54,13 +92,7 @@ class ExamplesModel(QAbstractTableModel):
     def headerData(self, col, orientation, role):
         # названия столбцов
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            columns = self._factors_count()
-            if col < columns:
-                factor = FactorController.get_by_position(self._db, col)
-                return QVariant(factor.name)
-            if col == columns + 1:
-                return QVariant(self._res_controller().name)
-            return QVariant("Weight")
+            return self._display_horisontal_header(cached_index=col)
         # названия строк
         if orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(str(col + 1) + ":")

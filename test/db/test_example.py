@@ -1,7 +1,5 @@
 from random import shuffle
-
-import pytest
-from db.db_fixtures import (
+from test.db.db_fixtures import (
     default_example,
     default_example_config,
     default_result_value_config,
@@ -11,6 +9,8 @@ from db.db_fixtures import (
     make_default_factors_and_values,
     make_default_result_value,
 )
+
+import pytest
 
 from data_utils.controllers.ExampleController import ExampleController
 from data_utils.controllers.ResultController import ResultController

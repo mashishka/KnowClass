@@ -1,10 +1,8 @@
-import logging as log
-
 from PyQt5.QtCore import (
     QAbstractTableModel,
+    QModelIndex,
     Qt,
     QVariant,
-    QModelIndex,
     pyqtSignal,
 )
 from PyQt5.QtWidgets import *
@@ -14,11 +12,9 @@ from data_utils.controllers.FactorController import FactorController
 from data_utils.controllers.ResultController import ResultController
 from data_utils.controllers.ValueController import ValueController
 from data_utils.core import DataBase
+from ui.pyui.SimpleGroupCache import SimpleGroupCache, cached
 
 
-# NOTE: простая модель для факторов (определений), может работать медленно
-# TODO: попробовать сделать кэширование (мб обновлять кэш по таймеру)
-# TODO: загружать названия столбцов один раз и использовать их
 class FactorsModel(QAbstractTableModel):
     sig_add_factor = pyqtSignal()
     sig_delete_factor = pyqtSignal(int)
@@ -27,67 +23,88 @@ class FactorsModel(QAbstractTableModel):
 
     def __init__(self, db: DataBase, parent=None):
         QAbstractTableModel.__init__(self, parent)
+
         self._db = db
+        self._cache = SimpleGroupCache()
+
+        # кеширование данных для интерфейса
+        self._display_data = cached(self._cache, "_display_data")(self._display_data)
+        self._display_header = cached(self._cache, "_display_header")(self._display_header)
+        self.rowCount = cached(self._cache, "rowCount")(self.rowCount)
+        self.columnCount = cached(self._cache, "columnCount")(self.columnCount)
+
+        # инвалидация кеша при изменении
+        # TODO: не только эти? (например, добавление значения, всякие изменения)
+        invalidate_signals = [
+            self.dataChanged,
+            self.headerDataChanged,
+            self.sig_add_factor,
+            self.sig_delete_factor,
+            self.sig_delete_factor,
+            self.sig_after_delete_result,
+        ]
+
+        def invalidate(*args, **kwargs):
+            self._cache.invalidate_all()
+
+        for signal in invalidate_signals:
+            signal.connect(invalidate)
 
     def rowCount(self, parent=None):
-        res_val_cnt = self._res_controller().get_values_count()
+        res_val_cnt = ResultController.get(self._db).get_values_count()
 
         if FactorController.get_count(self._db) == 0:
             # обработка пустой базы
-            if res_val_cnt == 0:
-                return 0
-            else:
-                return res_val_cnt
-        else:
-            # в базе что-то есть; длина всех столбцов разная
-            return max(
-                max(
-                    fact.get_values_count()
-                    for fact in FactorController.get_all(self._db)
-                ),
-                res_val_cnt,
-            )
+            return res_val_cnt
+
+        # в базе что-то есть; длина всех столбцов разная
+        return max(FactorController.get_max_value_count(self._db), res_val_cnt)
 
     def columnCount(self, parent=None):
-        # factors count + result
         return self._factors_count() + 1
 
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid():
-            row = index.row()
-            column = index.column()
-            # отображение
-            if role == Qt.DisplayRole:
-                # отображение всех факторов и результата с учётом кол-ва элементов в столбце
-                columns = self._factors_count()
+    def _display_data(self, cached_index: tuple[int, int]) -> QVariant:
+        row, column = cached_index
+        # отображение всех факторов и результата с учётом кол-ва элементов в столбце
 
-                if column < columns:
-                    factor = FactorController.get_by_position(self._db, column)
-                    if row < factor.get_values_count():
-                        value = factor.get_value_by_position(row)
-                        return QVariant(str("*" if value is None else value.name))
-                    else:
-                        return QVariant()
-                if column == columns:
-                    rc = self._res_controller()
-                    if row < rc.get_values_count():
-                        return QVariant(rc.get_value_by_position(row).name)
-                    else:
-                        return QVariant()
-            # выравнивание
-            if role == Qt.TextAlignmentRole:
-                return Qt.AlignVCenter + Qt.AlignHCenter
+        columns = self._factors_count()
+
+        if column < columns:
+            factor = FactorController.get_by_position(self._db, column)
+            if row < factor.get_values_count():
+                value = factor.get_value_by_position(row)
+                return QVariant("*" if value is None else value.name)
+        elif column == columns:
+            rc = ResultController.get(self._db)
+            if row < self._result_values_count(rc):
+                return QVariant(rc.get_value_by_position(row).name)
         return QVariant()
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return QVariant()
+
+        if role == Qt.DisplayRole:
+            return self._display_data(cached_index=(index.row(), index.column()))
+
+        # выравнивание
+        if role == Qt.TextAlignmentRole:
+            return Qt.AlignVCenter + Qt.AlignHCenter
+        return QVariant()
+
+    def _display_header(self, cached_index: int):
+        col = cached_index
+        columns = self._factors_count()
+        if col < columns:
+            factor = FactorController.get_by_position(self._db, col)
+            return QVariant(factor.name)
+        if col == columns:
+            return QVariant(ResultController.get(self._db).name)
 
     def headerData(self, col, orientation, role):
         # названия столбцов
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            columns = self._factors_count()
-            if col < columns:
-                factor = FactorController.get_by_position(self._db, col)
-                return QVariant(factor.name)
-            if col == columns:
-                return QVariant(self._res_controller().name)
+            return self._display_header(cached_index=col)
         return None
 
     # def flags(self, index: QModelIndex):
@@ -107,11 +124,11 @@ class FactorsModel(QAbstractTableModel):
     #             return True
     #     return False
 
-    def _factors_count(self):
+    def _factors_count(self) -> int:
         return FactorController.get_count(self._db)
 
-    def _res_controller(self) -> ResultController:
-        return ResultController.get(self._db)
+    def _result_values_count(self, result: ResultController) -> int:
+        return result.get_values_count()
 
     # логика работы с бд
     # =========================================================================
@@ -150,7 +167,7 @@ class FactorsModel(QAbstractTableModel):
     # добавить значение результату
     # name -- имя значения, text -- текст значения
     def add_result_value(self, name: str, text: str):
-        res = self._res_controller()
+        res = ResultController.get(self._db)
         res_count = res.get_values_count()
         r_cnt = self.rowCount()
 
@@ -220,9 +237,9 @@ class FactorsModel(QAbstractTableModel):
                 factor.remove_value_by_position(index.row())
         else:
             # удалить значение результата
-            res_contr = self._res_controller()
-            if index.row() < res_contr.get_values_count():
-                res_contr.remove_value_by_position(index.row())
+            res = ResultController.get(self._db)
+            if index.row() < res.get_values_count():
+                res.remove_value_by_position(index.row())
 
     # удалить столбцы по номеру
     def __delete_by_column(self, col: int):
@@ -231,5 +248,5 @@ class FactorsModel(QAbstractTableModel):
             FactorController.remove_by_position(self._db, col)
         else:
             # удалить все результаты
-            res_contr = self._res_controller()
-            res_contr.remove_values()
+            res = ResultController.get(self._db)
+            res.remove_values()

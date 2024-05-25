@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Union
+
 from sqlalchemy.orm import Session
 
 from data_utils.core import DataBase
@@ -22,26 +24,22 @@ class ValueController:
     @staticmethod
     def get_all(db: DataBase) -> list[ValueController]:
         with db.session as session:
-            all = DataBase.get_all(session, Value)
-        return [
-            ValueController(db, DataBase.get_factor_by_id(session, val.factor_id).name, val.name)
-            for val in all
-        ]
+            all = DataBase.get_all_field(session, Value.value_id)
+        # NOTE: эффективнее полный запрос?
+        return [ValueController(db, id) for id in all]
 
     # удаление всех значений по всем факторам
     @staticmethod
     def remove_all(db: DataBase) -> None:
         with db.session as session:
-            all = DataBase.get_all(session, Value)
-            for value in all:
-                session.delete(value)
+            DataBase.delete_all(session, Value)
             session.commit()
 
     # оператор сравнения
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ValueController):
             return False
-        return self._name == other._name
+        return self._id == other._id
 
     # получени фактора по значению
     @property
@@ -49,18 +47,21 @@ class ValueController:
         # cyclic dep
         from data_utils.controllers.FactorController import FactorController
 
-        return FactorController.get(self._db, self._factor_name)
+        with self._db.session as session:
+            factor_id = DataBase.get_field_by_id(session, Value, self._id, Value.factor_id)
+        return FactorController.get(self._db, factor_id)
 
     # атрибут имени (нельзя изменить)
     @property
     def name(self) -> str:
-        return self._name
+        with self._db.session as session:
+            return DataBase.get_field_by_id(session, Value, self._id, Value.name)
 
     # атрибут теста
     @property
     def text(self) -> str:
         with self._db.session as session:
-            return self.get_db_table(session).text_
+            return DataBase.get_field_by_id(session, Value, self._id, Value.text_)
 
     @text.setter
     def text(self, value: str) -> None:
@@ -90,16 +91,15 @@ class ValueController:
             )
             session.commit()
 
-    def __init__(self, db: DataBase, factor_name: str, name: str) -> None:
+    def __init__(self, db: DataBase, names_or_id: Union[tuple[str, str], int]) -> None:
         """Не использовать напрямую"""
 
         self._db = db
-        self._factor_name = factor_name
-        self._name = name
-
-        # check existance
-        with self._db.session as session:
-            self.get_db_table(session)
+        if isinstance(names_or_id, int):
+            self._id = names_or_id
+        else:
+            with self._db.session as session:
+                self._id = DataBase.get_value_by_names(session, *names_or_id).value_id
 
     def get_db_table(self, session: Session) -> Value:
-        return DataBase.get_value_by_names(session, self._factor_name, self.name)
+        return DataBase.get_table_by_id(session, Value, self._id)

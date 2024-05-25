@@ -11,7 +11,7 @@ from data_utils.controllers.ValueController import ValueController
 from data_utils.core import DataBase
 from data_utils.imp.position import TablePosition
 from data_utils.imp.rerased import reraised_class
-from data_utils.imp.tables import Example, ExampleFactorValue, Value
+from data_utils.imp.tables import Example, ExampleFactorValue, ResultValue, Value
 
 _T = TypeVar("_T")
 
@@ -24,10 +24,7 @@ class ExampleController:
     @staticmethod
     def make(db: DataBase, weight: float, result_value: ResultValueController) -> ExampleController:
         with db.session as session:
-            example = Example(
-                weight=weight,
-                result_value_id=result_value.get_db_table(session).result_value_id,
-            )
+            example = Example(weight=weight, result_value_id=result_value._id)
             session.add(example)
             session.commit()
 
@@ -36,13 +33,17 @@ class ExampleController:
     # получение по id
     @staticmethod
     def get(db: DataBase, id: int) -> ExampleController:
-        return ExampleController(db, id)
+        # check existance
+        res = ExampleController(db, id)
+        with db.session as session:
+            res.get_db_table(session)
+        return res
 
     # удаление по id
     @staticmethod
     def remove(db: DataBase, id: int) -> None:
         with db.session as session:
-            example = DataBase.get_example_by_id(session, id)
+            example = DataBase.get_table_by_id(session, Example, id)
             session.delete(example)
             session.commit()
 
@@ -50,8 +51,10 @@ class ExampleController:
     @staticmethod
     def get_by_position(db: DataBase, position: int) -> ExampleController:
         with db.session as session:
-            id = TablePosition.get_by_position(session, Example, position).example_id
-        return ExampleController(db, id)
+            example_id = TablePosition.get_field_by_position(
+                session, Example, position, Example.example_id
+            )
+        return ExampleController(db, example_id)
 
     # удаление по позиции
     @staticmethod
@@ -70,17 +73,16 @@ class ExampleController:
     # получение всех примеров
     @staticmethod
     def get_all(db: DataBase) -> list[ExampleController]:
+
         with db.session as session:
-            all = DataBase.get_all(session, Example)
-        return [ExampleController(db, val.example_id) for val in all]
+            all = DataBase.get_all_field(session, Example.example_id)
+        return [ExampleController(db, val) for val in all]
 
     # удаление всех примеров
     @staticmethod
     def remove_all(db: DataBase) -> None:
         with db.session as session:
-            all = DataBase.get_all(session, Example)
-            for example in all:
-                session.delete(example)
+            DataBase.delete_all(session, Example)
             session.commit()
 
     # оператор сравнения
@@ -98,7 +100,7 @@ class ExampleController:
     @property
     def weight(self) -> float:
         with self._db.session as session:
-            return self.get_db_table_field(session, Example.weight)
+            return DataBase.get_field_by_id(session, Example, self._id, Example.weight)
 
     @weight.setter
     def weight(self, value: float) -> None:
@@ -142,12 +144,16 @@ class ExampleController:
             session.commit()
 
     # атрибут значения результата
+    # NOTE: можно оптимизировать
     @property
     def result_value(self) -> ResultValueController:
         with self._db.session as session:
-            db_result_value = DataBase.get_result_value_by_id(
-                session, self.get_db_table_field(session, Example.result_value_id)
+            db_result_value = DataBase.get_table_by_id(
+                session,
+                ResultValue,
+                DataBase.get_field_by_id(session, Example, self._id, Example.result_value_id),
             )
+            # можно одним запросом?
             return ResultController.get(self._db).get_value(db_result_value.name)
 
     @result_value.setter
@@ -161,17 +167,16 @@ class ExampleController:
     # NOTE: None если * в таблице
     def get_value(self, factor: FactorController) -> ValueController | None:
         with self._db.session as session:
-            db_factor = factor.get_db_table(session)
             example_value = (
                 session.query(ExampleFactorValue.example_id, ExampleFactorValue.value_id)
                 .filter_by(example_id=self._id)
                 .join(Value)
-                .filter(Value.factor_id == db_factor.factor_id)
+                .filter(Value.factor_id == factor._id)
                 .one_or_none()
             )
             if example_value is None:
                 return None
-            value = DataBase.get_value_by_id(session, example_value.value_id)
+            value = DataBase.get_table_by_id(session, Value, example_value.value_id)
             return factor.get_value(value.name)
 
     # установка значения на факторе (с перезапистью)
@@ -205,11 +210,11 @@ class ExampleController:
     # количество значений по факторам
     def get_values_count(self) -> int:
         with self._db.session as session:
-            example_id = self.get_db_table_field(session, Example.example_id)
-            return DataBase.get_count(session, ExampleFactorValue, {"example_id": example_id})
+            return DataBase.get_count(session, ExampleFactorValue, {"example_id": self._id})
 
     # получение значений на всех факторах
     # NOTE: только те, не *
+    # NOTE: можно оптимизировать
     def get_values(self) -> list[ValueController]:
         factors = FactorController.get_all(self._db)
         res = []
@@ -220,6 +225,7 @@ class ExampleController:
         return res
 
     # удаление значений на всех факторах
+    # NOTE: можно оптимизировать
     def remove_values(self):
         factors = FactorController.get_all(self._db)
         for factor in factors:
@@ -232,15 +238,8 @@ class ExampleController:
         self._db = db
         self._id = id
 
-        # check existance
-        with self._db.session as session:
-            self.get_db_table(session)
-
     def get_db_table(self, session: Session) -> Example:
-        return DataBase.get_example_by_id(session, self._id)
-
-    def get_db_table_field(self, session: Session, field: InstrumentedAttribute[_T]) -> _T:
-        return DataBase.get_example_filed_by_id(session, self._id, field)
+        return DataBase.get_table_by_id(session, Example, self._id)
 
     def _remove_value(self, session: Session, factor_id: int) -> None:
         example_value = (

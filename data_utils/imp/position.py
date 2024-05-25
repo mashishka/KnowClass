@@ -1,27 +1,18 @@
 import json
-from typing import Sequence, Type, TypeVar
+from typing import Sequence, TypeAlias, TypeVar
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from data_utils.core import DataBase
 from data_utils.errors import InvalidPosition
-from data_utils.imp.tables import Example, Factor, ResultValue, Value
+from data_utils.imp.table_mappers import GetByPosTable, table_to_id_name, table_to_position_name
+from data_utils.imp.tables import AdditionalData, Example, Factor, ResultValue, Value
 
-PosTable = Example | Factor | ResultValue | Value
-GetByPosTable = Factor | ResultValue | Value
+PosTableGlobalIndex: TypeAlias = Example | Factor | ResultValue
+PosTable: TypeAlias = PosTableGlobalIndex | Value
 _T = TypeVar("_T")
-
-table_to_id_name = {
-    Example: "example_id",
-    Factor: "factor_id",
-    ResultValue: "result_value_id",
-    Value: "value_id",
-}
-table_to_position_name = {
-    Example: "example_positions",
-    Factor: "factor_positions",
-    ResultValue: "result_value_positions",
-}
 
 
 # реализация изменения/получения позиций
@@ -31,11 +22,11 @@ class TablePosition:
     @staticmethod
     def get_by_position(
         session: Session,
-        table: Type[_T],  # NOTE: _T is GetByPosTable
+        table: type[_T],  # NOTE: _T is GetByPosTable
         position: int,
     ) -> _T:  # same as table
         # NOTE: наверное, можно лучше реализовать
-        _table: Type[GetByPosTable] = table  # type: ignore
+        _table: type[GetByPosTable] = table  # type: ignore
         positions = TablePosition._get_positions_global(session, _table)
 
         try:
@@ -48,8 +39,44 @@ class TablePosition:
             raise InvalidPosition() from ex
 
     @staticmethod
-    def get_Value_by_position(session: Session, factor: Factor, position: int) -> Value:
-        positions = json.loads(factor.value_positions)
+    def get_field_by_position(
+        session: Session,
+        table: type[GetByPosTable],
+        position: int,
+        field: InstrumentedAttribute[_T],
+    ) -> _T:
+        positions = TablePosition._get_positions_global(session, table)
+
+        try:
+            return session.scalars(
+                select(field).filter_by(**{table_to_id_name[table]: positions[position]})
+            ).one()
+        except IndexError as ex:
+            raise InvalidPosition() from ex
+
+    @staticmethod
+    def get_Value_field_by_position(
+        session: Session,
+        factor_id: int,
+        position: int,
+        field: InstrumentedAttribute[_T],
+    ) -> _T:
+        positions = json.loads(
+            DataBase.get_field_by_id(session, Factor, factor_id, Factor.value_positions)
+        )
+
+        try:
+            return session.scalars(
+                select(field).filter_by(**{table_to_id_name[Value]: positions[position]})
+            ).one()
+        except IndexError as ex:
+            raise InvalidPosition() from ex
+
+    @staticmethod
+    def get_Value_by_position(session: Session, factor_id: int, position: int) -> Value:
+        positions = json.loads(
+            DataBase.get_field_by_id(session, Factor, factor_id, Factor.value_positions)
+        )
 
         try:
             return (
@@ -63,14 +90,14 @@ class TablePosition:
     @staticmethod
     def get_position(session: Session, elem: PosTable) -> int:
         id = TablePosition._get_id(elem)
-        # table = type(elem)
+
         positions = TablePosition._get_positions(session, elem)
         return positions.index(id)
 
     @staticmethod
     def change_insert(session: Session, elem: PosTable, new_position: int):
         id = TablePosition._get_id(elem)
-        # table = type(elem)
+
         positions = TablePosition._get_positions(session, elem)
 
         if new_position < 0 or new_position >= len(positions):
@@ -85,7 +112,7 @@ class TablePosition:
     def change_swap(session: Session, elem: PosTable, swap_with_elem: PosTable):
         id = TablePosition._get_id(elem)
         swap_with_id = TablePosition._get_id(swap_with_elem)
-        # table = type(elem)
+
         positions = TablePosition._get_positions(session, elem)
 
         index_id = positions.index(id)
@@ -106,9 +133,11 @@ class TablePosition:
         return TablePosition._get_positions_global(session, table)
 
     @staticmethod
-    def _get_positions_global(session: Session, table: Type[PosTable]) -> list[int]:
-        data = DataBase.get_addition_data(session)
-        pos_data = getattr(data, table_to_position_name[table])
+    def _get_positions_global(session: Session, table: type[PosTableGlobalIndex]) -> list[int]:
+        pos_data = DataBase.get_additional_data_field(
+            session,
+            getattr(AdditionalData, table_to_position_name[table]),
+        )
         return json.loads(pos_data)
 
     @staticmethod
@@ -117,7 +146,11 @@ class TablePosition:
             elem.factor.value_positions = json.dumps(positions)
             return
         table = type(elem)
-        data = DataBase.get_addition_data(session)
+        data = DataBase.get_table_by_id(
+            session,
+            AdditionalData,
+            DataBase.get_additional_data_field(session, AdditionalData.id),
+        )
         setattr(data, table_to_position_name[table], json.dumps(positions))
 
     @staticmethod

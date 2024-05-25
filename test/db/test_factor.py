@@ -1,12 +1,12 @@
 from random import shuffle
-
-import pytest
-from db.db_fixtures import (
+from test.db.db_fixtures import (
     default_factor,
     make_default_factor,
     make_default_factor_and_values,
     make_default_factors,
 )
+
+import pytest
 
 from data_utils.controllers.FactorController import FactorController
 from data_utils.core import DataBase

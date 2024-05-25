@@ -12,9 +12,9 @@ from PyQt5.uic import loadUi  # type: ignore
 
 from data_utils.core import DataBase
 
-from pyui.ExamplesModel import ExamplesModel
-from pyui.FactorsModel import FactorsModel
-from pyui.utils import error_window
+from ui.pyui.ExamplesModel import ExamplesModel
+from ui.pyui.FactorsModel import FactorsModel
+from ui.pyui.utils import error_window
 
 # from treelib import Node, Tree  # type: ignore
 
@@ -69,7 +69,7 @@ class MainUI(QMainWindow):
 
     def __init__(self):
         QMainWindow.__init__(self)
-        loadUi("ui/main.ui", self)  # ui/Fake.iu
+        loadUi("ui/widgets/main.ui", self)  # ui/widgets/Fake.iu
 
         # connetions
         self._connect_all()

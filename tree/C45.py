@@ -1,49 +1,7 @@
 import math
 import pandas as pd
 import numpy as np
-
-
-class _DecisionNode:
-    def __init__(self, attribute):
-        # Inisialisasi simpul keputusan dengan atribut yang diberikan
-        self.attribute = attribute
-        self.children = {}  # Menyimpan anak-anak simpul keputusan
-
-    def depth(self):
-        # Menghitung kedalaman simpul keputusan
-        if len(self.children) == 0:
-            return 1
-        else:
-            max_depth = 0
-            for child in self.children.values():
-                if isinstance(child, _DecisionNode):
-                    child_depth = child.depth()
-                    if child_depth > max_depth:
-                        max_depth = child_depth
-            return max_depth + 1
-
-    def add_child(self, value, node):
-        # Menambahkan anak ke simpul keputusan dengan nilai atribut yang diberikan
-        self.children[value] = node
-
-    def count_leaves(self):
-        if len(self.children) == 0:
-            return 1
-        else:
-            count = 0
-            for child in self.children.values():
-                if isinstance(child, _DecisionNode):
-                    count += child.count_leaves()
-                else:
-                    count += 1
-            return count
-
-
-class _LeafNode:
-    def __init__(self, label, weight):
-        # Inisialisasi simpul daun dengan label kelas dan bobot yang diberikan
-        self.label = label
-        self.weight = weight
+from tree.TreeClass import _LeafNode, _DecisionNode
 
 
 class C45Classifier:
@@ -152,17 +110,45 @@ class C45Classifier:
 
         # Base case 1: Jika semua data memiliki label kelas yang sama, return simpul daun dengan label kelas tersebut
         if len(class_labels) == 1:
-            return [_LeafNode(class_labels.pop(), sum(weights))]
+            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            probs = [w / np.sum(list_weights) for w in list_weights]
+            list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [
+                _LeafNode(label, weight, prob)
+                for label, weight, prob in zip(list_labels, list_weights, probs)
+            ]
 
         # Base case 2: Jika tidak ada atribut lagi yang bisa dipertimbangkan, return simpul daun dengan label mayoritas
         if len(attributes) == 1:
-            return [_LeafNode(label, sum(weights)) for label in class_labels]
+            # print(class_labels)
+            # print("_")
+            # probs = [w/np.sum(weights) for w in weights]
+            # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
+            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            probs = [w / np.sum(list_weights) for w in list_weights]
+            list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [
+                _LeafNode(label, weight, prob)
+                for label, weight, prob in zip(list_labels, list_weights, probs)
+            ]
 
         # Memilih atribut terbaik untuk membagi dataset menggunakan algoritma C5.0
         best_attribute = self.__select_best_attribute_c50(data, attributes, weights)
 
         if best_attribute is None:
-            return [_LeafNode(label, sum(weights)) for label in class_labels]
+            # print(class_labels)
+            # print("_")
+
+            # return [_LeafNode(label, sum(weights)) for label in class_labels]
+            # probs = [w/np.sum(weights) for w in weights]
+            # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
+            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            probs = [w / np.sum(list_weights) for w in list_weights]
+            list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [
+                _LeafNode(label, weight, prob)
+                for label, weight, prob in zip(list_labels, list_weights, probs)
+            ]
 
         best_attribute_name = attributes[best_attribute]
         tree = _DecisionNode(best_attribute_name)
@@ -204,7 +190,9 @@ class C45Classifier:
         weights = [self.weight] * len(
             data
         )  # Menginisialisasi bobot dengan nilai yang sama untuk setiap data
+        self.data = data
         self.tree = self.__make_tree(data.values.tolist(), self.attributes, weights)
+
         self.data = data
 
     def __classify(self, tree=None, instance=[]):

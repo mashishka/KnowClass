@@ -10,8 +10,11 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
 
+from tree.TreeClass import _DecisionNode, TreeType, is_leaf
+from tree.create_tree import MethodType, create_tree
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
 from ui.pyui.utils import error_window
@@ -59,6 +62,7 @@ class MainUI(QMainWindow):
     # tree tab
     tree_view: QTreeView
     status_label: QLabel
+    rebuild_tree_button: QPushButton
 
     # -------------------------------
 
@@ -173,9 +177,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_factor(self):
-        name, done = QInputDialog.getText(
-            self, "Создать фактор", "Введите имя нового фактора:"
-        )
+        name, done = QInputDialog.getText(self, "Создать фактор", "Введите имя нового фактора:")
         if done and name != "":
             text, done_t = QInputDialog.getMultiLineText(
                 self, "Создать фактор", "Введите текст нового фактора:"
@@ -406,6 +408,30 @@ class MainUI(QMainWindow):
                 pass
         # =========================================================
 
+    @pyqtSlot()
+    @error_window
+    def on_rebuild_tree_button_clicked(self, *args, **kwargs):
+        create_tree(self._data, MethodType.optimize)
+        tree = TreeController.get(self._data).data
+
+        # это простой метод обхода
+        def tree_print(tree: TreeType):
+            if is_leaf(tree):
+                print(tree.label)
+            else:
+                print(tree)
+                print(tree.children)
+                for child in tree.children.values():
+                    if isinstance(child, list):
+                        for node in child:
+                            print(node, type(node))
+                            tree_print(node)
+                    else:
+                        print(child, type(child))
+                        tree_print(child)
+
+        tree_print(tree)
+
     # Активировать
     @pyqtSlot()
     @error_window
@@ -513,8 +539,7 @@ class MainUI(QMainWindow):
         self._data.close()
         self._data = None
 
-        self._update_definitions_buttons()
-        self._update_examples_buttons()
+        self._update_buttons()
 
         self.status_label.setText("База знаний не задана")
 
@@ -537,8 +562,7 @@ class MainUI(QMainWindow):
         self.status_label.setText("База знаний: " + path.name)
 
         self._update_last_kb(path)
-        self._update_definitions_buttons()
-        self._update_examples_buttons()
+        self._update_buttons()
 
     # обновить список последних открытых баз
     def _update_last_kb(self, kb_path: PurePath):
@@ -599,18 +623,16 @@ class MainUI(QMainWindow):
         # таблица факторов
         self.definition_table.setModel(None)
         self.definition_table.setModel(modelf)
-        self.definition_table.selectionModel().currentChanged.connect(
-            self.on_def_select
-        )
-        self._update_definitions_buttons()
+        self.definition_table.selectionModel().currentChanged.connect(self.on_def_select)
 
         # таблица примеров
         self.example_table.setModel(None)
         self.example_table.setModel(modele)
         self.example_table.selectionModel().currentChanged.connect(self.on_ex_select)
-        self._update_examples_buttons()
 
         # TODO: отображение дерева тоже здесь
+
+        self._update_buttons()
 
     # обновить состояние кнопок Определений в зависимости от состояния текущей базы
     def _update_definitions_buttons(self):
@@ -651,6 +673,14 @@ class MainUI(QMainWindow):
         else:
             for btn in self.__all_ex_buttons([i for i in range(2, 7)]):
                 btn.setEnabled(True)
+
+    def _update_tree_buttons(self):
+        self.rebuild_tree_button.setDisabled(self._data is None)
+
+    def _update_buttons(self):
+        self._update_definitions_buttons()
+        self._update_examples_buttons()
+        self._update_tree_buttons()
 
     # получить список кнопок Примеров
     # exclude_list -- список номеров (с 1) кнопок, которые не надо возвращать

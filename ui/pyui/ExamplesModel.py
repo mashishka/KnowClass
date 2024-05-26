@@ -1,6 +1,13 @@
 import logging as log
 
-from PyQt5.QtCore import QAbstractTableModel, Qt, QVariant, pyqtSlot, QModelIndex
+from PyQt5.QtCore import (
+    QAbstractTableModel,
+    Qt,
+    QVariant,
+    pyqtSlot,
+    QModelIndex,
+    pyqtSignal,
+)
 from PyQt5.QtWidgets import *
 
 from data_utils.controllers.ExampleController import ExampleController
@@ -16,6 +23,8 @@ class ExamplesModel(QAbstractTableModel):
     # промежуточная переменная на случай удаления столбца результатов (например)
     __start_row_count: int = 0
 
+    sig_invalidate = pyqtSignal()
+
     def __init__(self, db: DataBase, parent=None):
         QAbstractTableModel.__init__(self, parent)
         self._db = db
@@ -23,9 +32,9 @@ class ExamplesModel(QAbstractTableModel):
 
         # кеширование данных для интерфейса
         self._display_data = cached(self._cache, "_display_data")(self._display_data)
-        self._display_header = cached(self._cache, "_display_horisontal_header")(
-            self._display_horisontal_header
-        )
+        self._display_horisontal_header = cached(
+            self._cache, "_display_horisontal_header"
+        )(self._display_horisontal_header)
         self.rowCount = cached(self._cache, "rowCount")(self.rowCount)
         self.columnCount = cached(self._cache, "columnCount")(self.columnCount)
 
@@ -34,6 +43,7 @@ class ExamplesModel(QAbstractTableModel):
         invalidate_signals = [
             self.dataChanged,
             self.headerDataChanged,
+            self.sig_invalidate,
             # self.sig_add_factor,
             # self.sig_delete_factor,
             # self.sig_delete_factor,
@@ -164,12 +174,15 @@ class ExamplesModel(QAbstractTableModel):
         ExampleController.make(self._db, 1.0, res_contr.get_value(name))
         self.endInsertRows()
 
+        self.sig_invalidate.emit()
+
     # удалить примеры, lst -- список индексов
     # строка удаляется, если был выделен хотя бы один её элемент
     def delete_examples(self, lst: list[QModelIndex]):
         self.on_before_delete()
         for ind in lst:
             ExampleController.remove_by_position(self._db, ind.row())
+        self.sig_invalidate.emit()
         self.on_after_delete()
 
     # изменить значение фактора примера
@@ -187,12 +200,15 @@ class ExamplesModel(QAbstractTableModel):
             # выбрали значение фактора
             cur_ex.add_value(factor.get_value(val_name))
 
+        self.sig_invalidate.emit()
+
     # изменить вес примера
     # ex_position -- позиция примера,
     # val -- вес
     def change_ex_weight(self, ex_position: int, val: float):
         cur_ex = ExampleController.get_by_position(self._db, ex_position)
         cur_ex.weight = val
+        self.sig_invalidate.emit()
 
     # изменить результат примера
     # ex_position -- позиция примера,
@@ -200,3 +216,4 @@ class ExamplesModel(QAbstractTableModel):
     def change_ex_result(self, ex_position: int, val_name: str):
         cur_ex = ExampleController.get_by_position(self._db, ex_position)
         cur_ex.result_value = self._res_controller().get_value(val_name)
+        self.sig_invalidate.emit()

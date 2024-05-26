@@ -21,6 +21,9 @@ class FactorsModel(QAbstractTableModel):
     sig_before_delete_result = pyqtSignal()
     sig_after_delete_result = pyqtSignal()
 
+    sig_local_invalidate = pyqtSignal()
+    sig_invalidate = pyqtSignal()
+
     def __init__(self, db: DataBase, parent=None):
         QAbstractTableModel.__init__(self, parent)
 
@@ -29,7 +32,9 @@ class FactorsModel(QAbstractTableModel):
 
         # кеширование данных для интерфейса
         self._display_data = cached(self._cache, "_display_data")(self._display_data)
-        self._display_header = cached(self._cache, "_display_header")(self._display_header)
+        self._display_header = cached(self._cache, "_display_header")(
+            self._display_header
+        )
         self.rowCount = cached(self._cache, "rowCount")(self.rowCount)
         self.columnCount = cached(self._cache, "columnCount")(self.columnCount)
 
@@ -40,8 +45,8 @@ class FactorsModel(QAbstractTableModel):
             self.headerDataChanged,
             self.sig_add_factor,
             self.sig_delete_factor,
-            self.sig_delete_factor,
             self.sig_after_delete_result,
+            self.sig_local_invalidate,
         ]
 
         def invalidate(*args, **kwargs):
@@ -49,6 +54,7 @@ class FactorsModel(QAbstractTableModel):
 
         for signal in invalidate_signals:
             signal.connect(invalidate)
+            signal.connect(self.sig_invalidate)
 
     def rowCount(self, parent=None):
         res_val_cnt = ResultController.get(self._db).get_values_count()
@@ -163,6 +169,7 @@ class FactorsModel(QAbstractTableModel):
         v_res.text = text
         if res_count == r_cnt:
             self.endInsertRows()
+        self.sig_local_invalidate.emit()
 
     # добавить значение результату
     # name -- имя значения, text -- текст значения
@@ -177,38 +184,45 @@ class FactorsModel(QAbstractTableModel):
         res.text = text
         if res_count == r_cnt:
             self.endInsertRows()
+        self.sig_local_invalidate.emit()
 
     # удалить столбцы целиком
     # lst -- список индексов столбцов (во всех номер строки == 0)
     def delete_columns(self, lst: list[QModelIndex]):
         # NOTE: иногда ругается на endRemoveColumns, но без ошибок
         start_row_count = self.rowCount()
+        start_col_count = self.columnCount()
         ln = len(lst)
+        fact_count = self._factors_count()
 
-        if lst[-1].column() == self._factors_count():
+        # флаг, есть ли среди удаляемых столбцов RESULT
+        has_result_col: bool = fact_count in [ind.column() for ind in lst]
+
+        if has_result_col:
             # среди столбцов есть столбец результатов,
             # его отображение не убираем
-            last_ind = lst[-1].column() - 1
             ln -= 1
             # сигнал для таблицы примеров -- обработка удаления результатов
             self.sig_before_delete_result.emit()
-        else:
-            # только факторы
-            last_ind = lst[-1].column()
-            # сигнал для таблицы примеров, чтобы убрала столбец фактора
-            self.sig_delete_factor.emit(ln)
 
-        self.beginRemoveColumns(QModelIndex(), lst[0].column(), last_ind)
-        for ind in reversed(lst):
+        for ind in lst:
             self.__delete_by_column(ind.column())
-        self.endRemoveColumns()
 
-        if lst[-1].column() == self._factors_count():
+        if has_result_col:
             self.sig_after_delete_result.emit()
 
+        # сигнал для таблицы примеров, чтобы убрала ln столбцов факторов
+        self.sig_delete_factor.emit(ln)
+
+        self.sig_local_invalidate.emit()
         end_row_count = self.rowCount()
+        end_col_count = self.columnCount()
+
         self.beginRemoveRows(QModelIndex(), end_row_count, start_row_count - 1)
         self.endRemoveRows()
+
+        self.beginRemoveColumns(QModelIndex(), end_col_count, start_col_count - 1)
+        self.endRemoveColumns()
 
     # удалить отдельные значения
     # lst -- список всех удаляемых ячеек
@@ -219,10 +233,11 @@ class FactorsModel(QAbstractTableModel):
         # чтобы убирала строки без результатов (бд сама их удаляет);
         # даже если среди ячеек нет из RESULT, всё норм
         self.sig_before_delete_result.emit()
-        for ind in reversed(lst):
+        for ind in lst:
             self.__delete_by_index(ind)
         self.sig_after_delete_result.emit()
 
+        self.sig_local_invalidate.emit()
         end_row_count = self.rowCount()
 
         self.beginRemoveRows(QModelIndex(), end_row_count, start_row_count - 1)

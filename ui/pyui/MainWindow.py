@@ -177,7 +177,9 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_factor(self):
-        name, done = QInputDialog.getText(self, "Создать фактор", "Введите имя нового фактора:")
+        name, done = QInputDialog.getText(
+            self, "Создать фактор", "Введите имя нового фактора:"
+        )
         if done and name != "":
             text, done_t = QInputDialog.getMultiLineText(
                 self, "Создать фактор", "Введите текст нового фактора:"
@@ -289,6 +291,12 @@ class MainUI(QMainWindow):
                 QMessageBox.Yes | QMessageBox.No,
             )
             if res_btn == QMessageBox.Yes:
+
+                # индексы должны быть отсортированы по убыванию номера столбца
+                def by_index_col(ind: QModelIndex):
+                    return ind.column()
+
+                col_ind_list.sort(key=by_index_col, reverse=True)
                 mod.delete_columns(col_ind_list)
             else:
                 return
@@ -310,6 +318,12 @@ class MainUI(QMainWindow):
                 QMessageBox.Yes | QMessageBox.No,
             )
             if res_btn == QMessageBox.Yes:
+
+                # индексы должны быть отсортированы по убыванию номера строки
+                def by_index_row(ind: QModelIndex):
+                    return ind.row()
+
+                all_ind_list.sort(key=by_index_row, reverse=True)
                 mod.delete_values(all_ind_list)
             else:
                 return
@@ -476,6 +490,13 @@ class MainUI(QMainWindow):
         # =========================================================
 
         ln = len(correct_ind_list)
+
+        # индексы должны быть отсортированы по убыванию номера строки
+        def by_index_row(ind: QModelIndex):
+            return ind.row()
+
+        correct_ind_list.sort(key=by_index_row, reverse=True)
+
         if ln % 10 == 1 and not 11 <= ln % 100 <= 14:
             rw_str = "строку"
         elif 2 <= ln % 10 <= 4 and not 11 <= ln % 100 <= 14:
@@ -619,11 +640,14 @@ class MainUI(QMainWindow):
         modelf.sig_delete_factor.connect(modele.on_delete_factor)
         modelf.sig_before_delete_result.connect(modele.on_before_delete)
         modelf.sig_after_delete_result.connect(modele.on_after_delete)
+        modelf.sig_invalidate.connect(modele.sig_invalidate)
 
         # таблица факторов
         self.definition_table.setModel(None)
         self.definition_table.setModel(modelf)
-        self.definition_table.selectionModel().currentChanged.connect(self.on_def_select)
+        self.definition_table.selectionModel().currentChanged.connect(
+            self.on_def_select
+        )
 
         # таблица примеров
         self.example_table.setModel(None)

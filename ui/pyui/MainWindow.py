@@ -162,7 +162,7 @@ class MainUI(QMainWindow):
     # TODO: консультация
     # Консультация->Начать консультацию
     @pyqtSlot()
-    # @error_window
+    @error_window
     def on_consult(self):
         # QMessageBox.information(self, "Консультация", "В разработке")
         if self.is_actual_tree():
@@ -171,6 +171,7 @@ class MainUI(QMainWindow):
                 f"Консультация",
                 "Выберите способ обработки коэффициента неопределённости:",
                 ["Вероятностный", "Веса"],
+                editable=False
             )
             if done:
                 consult(self, self._data, TreeController.get(self._data).data, name)

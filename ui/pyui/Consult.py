@@ -32,7 +32,7 @@ def consult(parent: QWidget, db: DataBase, tree: TreeType, name: str):
             names += ["*"]
             textes += ["*"]
         text, done = QInputDialog.getItem(
-            parent, "Консультация", f"{factor.text}?", textes
+            parent, "Консультация", f"{factor.text}?", textes, editable=False
         )
         if not done:
             raise CancelConsult("Не выбран вариант")
@@ -42,9 +42,9 @@ def consult(parent: QWidget, db: DataBase, tree: TreeType, name: str):
     def leaf_info(leaf: _LeafNode):
         result_text = ResultController.get(db).get_value(leaf.label).text
         if name == "Вероятностный":
-            return f"{result_text}\n" + f"\tС вероятностью: {leaf.probability}\n"
+            return f"{result_text}\n" + f"\tС вероятностью: {leaf.probability:.3f}\n"
         else:
-            return f"{result_text}\n" + f"\tС уверенностью: {leaf.weight}\n"
+            return f"{result_text}\n" + f"\tС уверенностью: {leaf.weight:.3f}\n"
 
     # возвращает список результатов leaf_info / исключение об отмене
     def _consult(
@@ -56,7 +56,7 @@ def consult(parent: QWidget, db: DataBase, tree: TreeType, name: str):
                 node.children.items()
             )
             factor_values = [value for value, child_node in children_map_list]
-            print(factor_values)
+            # print(factor_values)
 
             factor = FactorController.get(db, fator_name)
             chosen_value_name_or_none = chose_factor_value(

@@ -46,7 +46,7 @@ def cut_df(df, col, ans):
     tmp_df = tmp_df.loc[:, col:]
     tmp_df = tmp_df.drop(col, axis=1)
     # print(set(tmp_df[tmp_df.columns[0]]))
-    while set(tmp_df[tmp_df.columns[0]]) == {"None"}:
+    while set(tmp_df[tmp_df.columns[0]]) == {"*"}:
         tmp_df = tmp_df.iloc[:, 1:]
 
     return tmp_df

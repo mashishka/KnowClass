@@ -15,6 +15,7 @@ from data_utils.core import DataBase
 
 from tree.TreeClass import _DecisionNode, TreeType, is_leaf
 from tree.create_tree import MethodType, create_tree
+from ui.pyui.Consult import consult
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
 from ui.pyui.utils import error_window
@@ -153,9 +154,11 @@ class MainUI(QMainWindow):
     # TODO: консультация
     # Консультация->Начать консультацию
     @pyqtSlot()
-    @error_window
+    # @error_window
     def on_consult(self):
-        QMessageBox.information(self, "Консультация", "В разработке")
+        # QMessageBox.information(self, "Консультация", "В разработке")
+        consult(self, self._data, TreeController.get(self._data).data)
+
 
     # Справка->О программе
     @pyqtSlot()
@@ -693,7 +696,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_rebuild_tree_button_clicked(self, *args, **kwargs):
-        create_tree(self._data, MethodType.optimize)
+        create_tree(self._data, MethodType.left_to_right)
         tree = TreeController.get(self._data).data
 
         # это простой метод обхода

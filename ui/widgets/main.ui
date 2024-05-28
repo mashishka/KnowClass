@@ -537,6 +537,19 @@
                </widget>
               </item>
               <item>
+               <widget class="QLabel" name="actual_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QPushButton" name="rebuild_tree_button">
                 <property name="enabled">
                  <bool>false</bool>
@@ -578,7 +591,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QTreeView" name="tree_view">
+            <widget class="QTreeWidget" name="tree_widget">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -595,8 +608,21 @@
               <bool>true</bool>
              </property>
              <attribute name="headerMinimumSectionSize">
+              <number>100</number>
+             </attribute>
+             <attribute name="headerDefaultSectionSize">
               <number>250</number>
              </attribute>
+             <column>
+              <property name="text">
+               <string>Rules</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Results</string>
+              </property>
+             </column>
             </widget>
            </item>
           </layout>

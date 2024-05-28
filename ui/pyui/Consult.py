@@ -12,12 +12,12 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex
 from PyQt5.QtWidgets import *
 
 
-
 class CancelConsult(Exception):
     pass
 
+
 # TODO: тип вероятность / веса
-def consult(parent: QWidget, db: DataBase, tree: TreeType):
+def consult(parent: QWidget, db: DataBase, tree: TreeType, name: str):
     def same_value(value: ValueController | None, chosen: str):
         if value is None:
             return chosen == "*"
@@ -32,35 +32,56 @@ def consult(parent: QWidget, db: DataBase, tree: TreeType):
             names += ["*"]
             textes += ["*"]
         text, done = QInputDialog.getItem(
-            parent, "Консультация", f"{factor.text}?",textes
+            parent, "Консультация", f"{factor.text}?", textes
         )
         if not done:
             raise CancelConsult("Не выбран вариант")
         name_index = textes.index(text)
         return names[name_index]
 
-
     def leaf_info(leaf: _LeafNode):
         result_text = ResultController.get(db).get_value(leaf.label).text
-        return f"Результат: {result_text}\n" + f"\tВес: {leaf.weight}\n" + f"\tВероятность: {leaf.probability}\n"
+        if name == "Вероятностный":
+            return f"{result_text}\n" + f"\tС вероятностью: {leaf.probability}\n"
+        else:
+            return f"{result_text}\n" + f"\tС уверенностью: {leaf.weight}\n"
 
     # возвращает список результатов leaf_info / исключение об отмене
-    def _consult(node, examples: list[ExampleController], parent_node=None, edge_label=None)  -> list[str]:
+    def _consult(
+        node, examples: list[ExampleController], parent_node=None, edge_label=None
+    ) -> list[str]:
         if isinstance(node, _DecisionNode):
             fator_name = str(node.attribute)
-            children_map_list: list[tuple[str, TreeType | list[_LeafNode]]] = list(node.children.items())
+            children_map_list: list[tuple[str, TreeType | list[_LeafNode]]] = list(
+                node.children.items()
+            )
             factor_values = [value for value, child_node in children_map_list]
             print(factor_values)
 
             factor = FactorController.get(db, fator_name)
-            chosen_value_name_or_none = chose_factor_value(factor, with_none=("*" in factor_values))
+            chosen_value_name_or_none = chose_factor_value(
+                factor, with_none=("*" in factor_values)
+            )
             chosen_value_index = factor_values.index(chosen_value_name_or_none)
 
-            next_examples = [example for example in examples if same_value(example.get_value(factor), chosen_value_name_or_none)]
-            return _consult(children_map_list[chosen_value_index][1], next_examples, node, factor_values[chosen_value_index])
+            next_examples = [
+                example
+                for example in examples
+                if same_value(example.get_value(factor), chosen_value_name_or_none)
+            ]
+            return _consult(
+                children_map_list[chosen_value_index][1],
+                next_examples,
+                node,
+                factor_values[chosen_value_index],
+            )
 
         if isinstance(node, _LeafNode):
-            examples = [example.weight for example in examples if example.result_value.name == node.label]
+            examples = [
+                example.weight
+                for example in examples
+                if example.result_value.name == node.label
+            ]
             node.weight = sum(examples)
             node.probability *= len(examples)
             # print(node.weight, examples)
@@ -68,14 +89,16 @@ def consult(parent: QWidget, db: DataBase, tree: TreeType):
 
         res = []
 
-        unique_subnodes = list({subnode.label : subnode for subnode in node}.values())
-        unique_subnodes = sorted(unique_subnodes, key = lambda node: node.label)
+        unique_subnodes = list({subnode.label: subnode for subnode in node}.values())
+        unique_subnodes = sorted(unique_subnodes, key=lambda node: node.label)
         for subnode in unique_subnodes:
-           res +=  _consult(subnode,examples, parent_node)
+            res += _consult(subnode, examples, parent_node)
         return res
+
     try:
-        result_list = _consult(tree, examples = ExampleController.get_all(db))
+        result_list = _consult(tree, examples=ExampleController.get_all(db))
         result_text = "\n".join(result_list)
+        result_text = ResultController.get(db).text + "\n" + result_text
         QMessageBox.information(parent, "Результат консультации", result_text)
     except CancelConsult as e:
         QMessageBox.warning(parent, "Консультация отменена", str(e))

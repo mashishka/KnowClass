@@ -265,3 +265,110 @@ class FactorsModel(QAbstractTableModel):
             # удалить все результаты
             res = ResultController.get(self._db)
             res.remove_values()
+
+    # получить имя и текст фактора с позицией col
+    def get_fact_info(self, col: int) -> tuple[str, str]:
+        fact = FactorController.get_by_position(self._db, col)
+        return fact.name, fact.text
+
+    # получить имя и текст значения с позицией row-col
+    def get_fact_val_info(self, row: int, col: int) -> tuple[str, str]:
+        fact = FactorController.get_by_position(self._db, col)
+        if row < fact.get_values_count():
+            val = fact.get_value_by_position(row)
+            return val.name, val.text
+        return "", ""
+
+    # получить текст RESULT
+    def get_result_text(self) -> str:
+        res = ResultController.get(self._db)
+        return res.text
+
+    # получить имя и текст значения результата
+    def get_result_val_info(self, row: int) -> tuple[str, str]:
+        res = ResultController.get(self._db)
+        if row < res.get_values_count():
+            val = res.get_value_by_position(row)
+            return val.name, val.text
+        return "", ""
+
+    # возвращают признак успеха установки (корректность индекса)
+    # установить текст фактора с позицией col
+    def set_fact_text(self, col: int, txt: str) -> bool:
+        fact = FactorController.get_by_position(self._db, col)
+        fact.text = txt
+        self.sig_local_invalidate.emit()
+        return True
+
+    # установить текст значения с позицией row-col
+    def set_fact_val_text(self, row: int, col: int, txt: str) -> bool:
+        fact = FactorController.get_by_position(self._db, col)
+        if row < fact.get_values_count():
+            fact.get_value_by_position(row).text = txt
+            self.sig_local_invalidate.emit()
+            return True
+        return False
+
+    # установить текст RESULT
+    def set_result_text(self, txt: str) -> bool:
+        res = ResultController.get(self._db)
+        res.text = txt
+        self.sig_local_invalidate.emit()
+        return True
+
+    # установить текст значения результата
+    def set_result_val_text(self, row: int, txt: str) -> bool:
+        res = ResultController.get(self._db)
+        if row < res.get_values_count():
+            res.get_value_by_position(row).text = txt
+            self.sig_local_invalidate.emit()
+            return True
+        return False
+
+    # проверка на корректность индекса модели -- индекс показывает на значение
+    def _check_model_index(self, ind: QModelIndex) -> bool:
+        if ind.isValid():
+            fct_cnt = self._factors_count()
+            if ind.column() < fct_cnt:
+                fact = FactorController.get_by_position(self._db, ind.column())
+                if ind.row() < fact.get_values_count():
+                    return True
+                return False
+            elif ind.column() == fct_cnt:
+                res = ResultController.get(self._db)
+                if ind.row() < res.get_values_count():
+                    return True
+                return False  # мб можно лесенку поменьше, но пока ладно
+            return False
+        return False
+
+    # возвращают признак успеха перемещения (корректность индекса)
+    # переместить фактор с позицией prev_pos на позицию dest_pos (остальные сдвигаются)
+    def move_factor_to(self, prev_pos: int, dest_pos: int) -> bool:
+        fact = FactorController.get_by_position(self._db, prev_pos)
+        if 0 <= dest_pos < self._factors_count():
+            fact.position = dest_pos
+            self.sig_local_invalidate.emit()
+            return True
+        return False
+
+    # переместить значение с позицией prev_row из фактора с позицией col
+    # на позицию dest_pos (остальные сдвигаются)
+    def move_value_to(self, prev_row: int, col: int, dest_row: int) -> bool:
+        fact_cnt = self._factors_count()
+        if col < fact_cnt:
+            fact = FactorController.get_by_position(self._db, col)
+            val = fact.get_value_by_position(prev_row)
+            if 0 <= dest_row < fact.get_values_count():
+                val.position = dest_row
+                self.sig_local_invalidate.emit()
+                return True
+            return False
+        else:
+            res = ResultController.get(self._db)
+            val = res.get_value_by_position(prev_row)
+            if 0 <= dest_row < res.get_values_count():
+                val.position = dest_row
+                self.sig_local_invalidate.emit()
+                return True
+            return False

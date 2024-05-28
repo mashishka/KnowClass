@@ -6,7 +6,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from data_utils.controllers.FactorController import FactorController
-from data_utils.controllers.ResultController import ResultController, ResultValueController
+from data_utils.controllers.ResultController import (
+    ResultController,
+    ResultValueController,
+)
 from data_utils.controllers.ValueController import ValueController
 from data_utils.core import DataBase
 from data_utils.imp.position import TablePosition
@@ -22,7 +25,9 @@ _T = TypeVar("_T")
 class ExampleController:
     # создание с обязательными параметрами
     @staticmethod
-    def make(db: DataBase, weight: float, result_value: ResultValueController) -> ExampleController:
+    def make(
+        db: DataBase, weight: float, result_value: ResultValueController
+    ) -> ExampleController:
         with db.session as session:
             example = Example(weight=weight, result_value_id=result_value._id)
             session.add(example)
@@ -151,7 +156,9 @@ class ExampleController:
             db_result_value = DataBase.get_table_by_id(
                 session,
                 ResultValue,
-                DataBase.get_field_by_id(session, Example, self._id, Example.result_value_id),
+                DataBase.get_field_by_id(
+                    session, Example, self._id, Example.result_value_id
+                ),
             )
             # можно одним запросом?
             return ResultController.get(self._db).get_value(db_result_value.name)
@@ -168,7 +175,9 @@ class ExampleController:
     def get_value(self, factor: FactorController) -> ValueController | None:
         with self._db.session as session:
             example_value = (
-                session.query(ExampleFactorValue.example_id, ExampleFactorValue.value_id)
+                session.query(
+                    ExampleFactorValue.example_id, ExampleFactorValue.value_id
+                )
                 .filter_by(example_id=self._id)
                 .join(Value)
                 .filter(Value.factor_id == factor._id)
@@ -179,7 +188,7 @@ class ExampleController:
             value = DataBase.get_table_by_id(session, Value, example_value.value_id)
             return factor.get_value(value.name)
 
-    # установка значения на факторе (с перезапистью)
+    # установка значения на факторе (с перезаписью)
     def add_value(self, value: ValueController) -> None:
         with self._db.session as session:
             values = self.get_values()
@@ -196,7 +205,9 @@ class ExampleController:
                 pass
 
             db_value = value.get_db_table(session)
-            new_value = ExampleFactorValue(example_id=self._id, value_id=db_value.value_id)
+            new_value = ExampleFactorValue(
+                example_id=self._id, value_id=db_value.value_id
+            )
             session.add(new_value)
             session.commit()
 
@@ -210,7 +221,9 @@ class ExampleController:
     # количество значений по факторам
     def get_values_count(self) -> int:
         with self._db.session as session:
-            return DataBase.get_count(session, ExampleFactorValue, {"example_id": self._id})
+            return DataBase.get_count(
+                session, ExampleFactorValue, {"example_id": self._id}
+            )
 
     # получение значений на всех факторах
     # NOTE: только те, не *

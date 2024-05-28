@@ -166,15 +166,18 @@ class ExamplesModel(QAbstractTableModel):
         return factor.name, val_list
 
     # добавить пример, name -- имя результата, вес по умолчанию == 1.0
-    def add_example(self, name: str):
+    # возвращает экземпляр созданного примера
+    def add_example(self, name: str) -> ExampleController:
         res_contr = self._res_controller()
         row_cnt = self.rowCount()
 
         self.beginInsertRows(QModelIndex(), row_cnt, row_cnt)
-        ExampleController.make(self._db, 1.0, res_contr.get_value(name))
+        ex = ExampleController.make(self._db, 1.0, res_contr.get_value(name))
         self.endInsertRows()
 
         self.sig_invalidate.emit()
+
+        return ex
 
     # удалить примеры, lst -- список индексов
     # строка удаляется, если был выделен хотя бы один её элемент
@@ -216,4 +219,27 @@ class ExamplesModel(QAbstractTableModel):
     def change_ex_result(self, ex_position: int, val_name: str):
         cur_ex = ExampleController.get_by_position(self._db, ex_position)
         cur_ex.result_value = self._res_controller().get_value(val_name)
+        self.sig_invalidate.emit()
+
+    # переместить пример prev_pos в позицию dest_pos
+    # позиции начинаются с 0, в интерфейсе с единицы
+    def move_example_to(self, prev_pos: int, dest_pos: int) -> bool:
+        ex = ExampleController.get_by_position(self._db, prev_pos)
+        if 0 <= dest_pos < ExampleController.get_count(self._db):
+            ex.position = dest_pos
+            self.sig_invalidate.emit()
+            return True
+        return False
+
+    # дублировать пример с позицией pos (настоящая позиция, начинается с 0)
+    def clone_ex(self, pos: int):
+        ex = ExampleController.get_by_position(self._db, pos)
+        new_ex = self.add_example(ex.result_value.name)
+
+        for val in ex.get_values():
+            new_ex.add_value(val)
+
+        new_ex.weight = ex.weight
+
+        self.move_example_to(new_ex.position, pos + 1)
         self.sig_invalidate.emit()

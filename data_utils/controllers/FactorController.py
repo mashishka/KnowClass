@@ -30,7 +30,7 @@ class FactorController:
     def get(db: DataBase, name: str) -> FactorController:
         return FactorController(db, name)
 
-    # удаление по позиции
+    # удаление по имени
     @staticmethod
     def remove(db: DataBase, name: str) -> None:
         with db.session as session:
@@ -59,18 +59,18 @@ class FactorController:
     @staticmethod
     def get_count(db: DataBase) -> int:
         with db.session as session:
-            return json.loads(DataBase.get_additional_data_field(session, AdditionalData.count))[
-                "factors"
-            ]
+            return json.loads(
+                DataBase.get_additional_data_field(session, AdditionalData.count)
+            )["factors"]
 
     # максимальное количество значений среди всех факторов
     @staticmethod
     def get_max_value_count(db: DataBase) -> int:
         with db.session as session:
             return max(
-                json.loads(DataBase.get_additional_data_field(session, AdditionalData.count))[
-                    "values"
-                ].values()
+                json.loads(
+                    DataBase.get_additional_data_field(session, AdditionalData.count)
+                )["values"].values()
             )
 
     # получение всех факторов
@@ -116,7 +116,9 @@ class FactorController:
     @property
     def active(self) -> bool:
         with self._db.session as session:
-            return bool(DataBase.get_field_by_id(session, Factor, self._id, Factor.active))
+            return bool(
+                DataBase.get_field_by_id(session, Factor, self._id, Factor.active)
+            )
 
     @active.setter
     def active(self, value: bool) -> None:
@@ -160,7 +162,7 @@ class FactorController:
     def get_value(self, name: str) -> ValueController:
         return ValueController(self._db, (self.name, name))
 
-    # получение значения фактора по имени
+    # удаление значения фактора по имени
     def remove_value(self, name: str) -> None:
         with self._db.session as session:
             value = DataBase.get_value_by_names(session, self.name, name)
@@ -175,7 +177,7 @@ class FactorController:
             )
         return ValueController(self._db, value_id)
 
-    # получение значения фактора по позиции
+    # удаление значения фактора по позиции
     def remove_value_by_position(self, position: int) -> None:
         with self._db.session as session:
             factor = TablePosition.get_Value_by_position(
@@ -189,9 +191,9 @@ class FactorController:
     # количество значений фактора
     def get_values_count(self) -> int:
         with self._db.session as session:
-            return json.loads(DataBase.get_additional_data_field(session, AdditionalData.count))[
-                "values"
-            ][str(self._id)]
+            return json.loads(
+                DataBase.get_additional_data_field(session, AdditionalData.count)
+            )["values"][str(self._id)]
 
     # получение всех значений фактора
     def get_values(self) -> list[ValueController]:

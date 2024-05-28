@@ -42,6 +42,7 @@ class MainUI(QMainWindow):
 
     # definition tab
     definition_table: QTableView
+
     add_factor_button: QPushButton
     add_value_button: QPushButton
     change_text_button: QPushButton
@@ -49,6 +50,8 @@ class MainUI(QMainWindow):
     activate_factor_button: QPushButton
     move_factor_button: QPushButton
     delete_factor_button: QPushButton
+
+    text_line: QLineEdit
 
     # example tab
     example_table: QTableView
@@ -74,6 +77,10 @@ class MainUI(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         loadUi("ui/widgets/main.ui", self)  # ui/widgets/Fake.iu
+
+        # механика активности факторов/примеров не реализуется
+        self.activate_factor_button.setVisible(False)
+        self.activate_example_button.setVisible(False)
 
         # connetions
         self._connect_all()
@@ -173,6 +180,39 @@ class MainUI(QMainWindow):
             for btn in self.__all_def_buttons([1, 2]):
                 btn.setEnabled(False)
 
+    # отображение текста текущего выделения
+    @pyqtSlot(QModelIndex, QModelIndex)
+    def on_text_show(self, ind: QModelIndex, prev: QModelIndex):
+        mod = self.get_fact_model()
+        fact_cnt = mod._factors_count()
+
+        sel_mod = self.definition_table.selectionModel()
+        col_ind_list = sel_mod.selectedColumns()
+
+        if ind.isValid():
+            if ind.column() < fact_cnt:
+                # =========================================================
+                if len(col_ind_list) > 0:
+                    # выбран фактор (весь столбец)
+                    self.text_line.setText(mod.get_fact_info(ind.column())[1])
+                else:
+                    # выбрано значение фактора
+                    self.text_line.setText(
+                        mod.get_fact_val_info(ind.row(), ind.column())[1]
+                    )
+                # =========================================================
+            else:
+                # =========================================================
+                if len(col_ind_list) > 0:
+                    # выбран столбец результатов (весь)
+                    self.text_line.setText(mod.get_result_text())
+                else:
+                    # выбрано значение результата
+                    self.text_line.setText(mod.get_result_val_info(ind.row())[1])
+                # =========================================================
+        else:
+            self.text_line.setText("")
+
     # Добавить фактор
     @pyqtSlot()
     @error_window
@@ -243,7 +283,79 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_change_text(self):
-        QMessageBox.information(self, "Изменить текст", "В разработке")
+        ind = self.definition_table.currentIndex()
+        mod = self.get_fact_model()
+        fact_cnt = mod._factors_count()
+
+        sel_mod = self.definition_table.selectionModel()
+        col_ind_list = sel_mod.selectedColumns()
+
+        if ind.isValid():
+            if ind.column() < fact_cnt:
+                # =========================================================
+                if len(col_ind_list) > 0:
+                    # выбран фактор (весь столбец)
+                    text, done_t = QInputDialog.getMultiLineText(
+                        self,
+                        "Изменить текст фактора",
+                        "Введите новый текст фактора:",
+                        mod.get_fact_info(ind.column())[1],
+                    )
+                    if done_t:
+                        if mod.set_fact_text(ind.column(), text):
+                            self.text_line.setText(text)
+                    else:
+                        # QMessageBox.information(self, "", "Отмена")
+                        pass
+                elif mod._check_model_index(ind):
+                    # выбрано значение, причём с корректным индексом
+                    text, done_t = QInputDialog.getMultiLineText(
+                        self,
+                        "Изменить текст значения",
+                        "Введите новый текст значения:",
+                        mod.get_fact_val_info(ind.row(), ind.column())[1],
+                    )
+                    if done_t:
+                        if mod.set_fact_val_text(ind.row(), ind.column(), text):
+                            self.text_line.setText(text)
+                    else:
+                        # QMessageBox.information(self, "", "Отмена")
+                        pass
+                # =========================================================
+            else:
+                # =========================================================
+                if len(col_ind_list) > 0:
+                    # выбран результат (весь столбец)
+                    text, done_t = QInputDialog.getMultiLineText(
+                        self,
+                        "Изменить текст результата",
+                        "Введите новый текст результата:",
+                        mod.get_result_text(),
+                    )
+                    if done_t:
+                        if mod.set_result_text(text):
+                            self.text_line.setText(text)
+                    else:
+                        # QMessageBox.information(self, "", "Отмена")
+                        pass
+                elif mod._check_model_index(ind):
+                    # выбрано значение результата, причём с корректным индексом
+                    text, done_t = QInputDialog.getMultiLineText(
+                        self,
+                        "Изменить текст значения",
+                        "Введите новый текст значения:",
+                        mod.get_result_val_info(ind.row())[1],
+                    )
+                    if done_t:
+                        if mod.set_result_val_text(ind.row(), text):
+                            self.text_line.setText(text)
+                    else:
+                        # QMessageBox.information(self, "", "Отмена")
+                        pass
+                # =========================================================
+
+        else:
+            self.text_line.setText("")
 
     # Изменить имя
     # @pyqtSlot()
@@ -261,7 +373,66 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_move_factor(self):
-        QMessageBox.information(self, "Переместить", "В разработке")
+        ind = self.definition_table.currentIndex()
+        mod = self.get_fact_model()
+        fact_cnt = mod._factors_count()
+
+        sel_mod = self.definition_table.selectionModel()
+        col_ind_list = sel_mod.selectedColumns()
+
+        # =========================================================
+        if len(col_ind_list) > 0:
+            # выбраны целые столбцы, перемещаем последний
+            if ind.column() == fact_cnt:
+                # столбец RESULT неперемещаемый
+                return
+
+            cur_fact_name, cur_fact_text = mod.get_fact_info(ind.column())
+            pos, done_t = QInputDialog.getInt(
+                self,
+                f"Переместить фактор {cur_fact_name}",
+                "Введите новую позицию фактора (начиная с нуля):",
+                ind.column(),
+                0,
+            )
+            if done_t:
+                if not mod.move_factor_to(ind.column(), pos):
+                    QMessageBox.warning(
+                        self,
+                        f"Переместить фактор {cur_fact_name}",
+                        "Некорректная позиция",
+                    )
+            else:
+                # QMessageBox.information(self, "", "Отмена")
+                pass
+
+        # =========================================================
+        elif mod._check_model_index(ind):
+            # выбраны ячейки, перемещаем последнюю
+            if ind.column() == fact_cnt:
+                cur_val_name, cur_val_text = mod.get_result_val_info(ind.row())
+            else:
+                cur_val_name, cur_val_text = mod.get_fact_val_info(
+                    ind.row(), ind.column()
+                )
+
+            pos, done_t = QInputDialog.getInt(
+                self,
+                f"Переместить значение {cur_val_name}",
+                "Введите новую позицию значения (начиная с нуля):",
+                ind.row(),
+                0,
+            )
+            if done_t:
+                if not mod.move_value_to(ind.row(), ind.column(), pos):
+                    QMessageBox.warning(
+                        self,
+                        f"Переместить значение {cur_val_name}",
+                        "Некорректная позиция",
+                    )
+            else:
+                # QMessageBox.information(self, "", "Отмена")
+                pass
 
     # Удалить
     # Удаляет факторы или значения в зависимости от выбора
@@ -366,7 +537,9 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_clone_example(self):
-        QMessageBox.information(self, "Дублировать", "В разработке")
+        mod = self.get_ex_model()
+        cur_ind = self.example_table.currentIndex()
+        mod.clone_ex(cur_ind.row())
 
     # Изменить
     @pyqtSlot()
@@ -422,30 +595,6 @@ class MainUI(QMainWindow):
                 pass
         # =========================================================
 
-    @pyqtSlot()
-    @error_window
-    def on_rebuild_tree_button_clicked(self, *args, **kwargs):
-        create_tree(self._data, MethodType.optimize)
-        tree = TreeController.get(self._data).data
-
-        # это простой метод обхода
-        def tree_print(tree: TreeType):
-            if is_leaf(tree):
-                print(tree.label)
-            else:
-                print(tree)
-                print(tree.children)
-                for child in tree.children.values():
-                    if isinstance(child, list):
-                        for node in child:
-                            print(node, type(node))
-                            tree_print(node)
-                    else:
-                        print(child, type(child))
-                        tree_print(child)
-
-        tree_print(tree)
-
     # Активировать
     @pyqtSlot()
     @error_window
@@ -456,7 +605,26 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_move_example(self):
-        QMessageBox.information(self, "Переместить", "В разработке")
+        mod = self.get_ex_model()
+        cur_ind = self.example_table.currentIndex()
+
+        pos, done_t = QInputDialog.getInt(
+            self,
+            f"Переместить пример {str(cur_ind.row() + 1)}",
+            "Введите новый номер примера (начиная с единицы):",
+            cur_ind.row() + 1,
+            1,
+        )
+        if done_t:
+            if not mod.move_example_to(cur_ind.row(), pos - 1):
+                QMessageBox.warning(
+                    self,
+                    f"Переместить пример {str(cur_ind.row() + 1)}",
+                    "Некорректная позиция",
+                )
+        else:
+            # QMessageBox.information(self, "", "Отмена")
+            pass
 
     # Удалить
     @pyqtSlot()
@@ -519,6 +687,36 @@ class MainUI(QMainWindow):
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
 
+    # слоты для Дерева
+    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+    @pyqtSlot()
+    @error_window
+    def on_rebuild_tree_button_clicked(self, *args, **kwargs):
+        create_tree(self._data, MethodType.optimize)
+        tree = TreeController.get(self._data).data
+
+        # это простой метод обхода
+        def tree_print(tree: TreeType):
+            if is_leaf(tree):
+                print(tree.label)
+            else:
+                print(tree)
+                print(tree.children)
+                for child in tree.children.values():
+                    if isinstance(child, list):
+                        for node in child:
+                            print(node, type(node))
+                            tree_print(node)
+                    else:
+                        print(child, type(child))
+                        tree_print(child)
+
+        tree_print(tree)
+
+    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+
     # все коннекты главного окна
     def _connect_all(self):
         # connect File menu
@@ -563,6 +761,7 @@ class MainUI(QMainWindow):
         self._update_buttons()
 
         self.status_label.setText("База знаний не задана")
+        self.text_line.setText("")
 
     # открыть новую базу (старая закрывается)
     def _open_kb(self, path: PurePath):
@@ -648,6 +847,7 @@ class MainUI(QMainWindow):
         self.definition_table.selectionModel().currentChanged.connect(
             self.on_def_select
         )
+        self.definition_table.selectionModel().currentChanged.connect(self.on_text_show)
 
         # таблица примеров
         self.example_table.setModel(None)

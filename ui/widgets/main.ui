@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>882</width>
-    <height>508</height>
+    <width>917</width>
+    <height>532</height>
    </rect>
   </property>
   <property name="font">
@@ -53,84 +53,135 @@
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <widget class="QPushButton" name="add_factor_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>20</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Добавить фактор</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="add_value_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>70</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Добавить значение</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="change_text_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>120</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Изменить текст</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="activate_factor_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>170</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Активировать</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="move_factor_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>220</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Переместить</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="delete_factor_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>270</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Удалить</string>
-             </property>
-            </widget>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QPushButton" name="add_factor_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Добавить фактор</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="add_value_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Добавить значение</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="change_text_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Изменить текст</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="activate_factor_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Активировать</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="move_factor_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Переместить</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="delete_factor_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Удалить</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
@@ -141,8 +192,8 @@
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QGridLayout" name="gridLayout_2">
-             <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
               <widget class="QTableView" name="definition_table">
                <property name="font">
                 <font>
@@ -168,6 +219,25 @@
                <attribute name="verticalHeaderStretchLastSection">
                 <bool>false</bool>
                </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="text_line">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -204,84 +274,135 @@
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <widget class="QPushButton" name="add_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>20</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Добавить пример</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="clone_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>70</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Дублировать</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="change_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>120</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Изменить</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="activate_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>170</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Активировать</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="move_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>220</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Переместить</string>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="delete_example_button">
-             <property name="geometry">
-              <rect>
-               <x>30</x>
-               <y>270</y>
-               <width>151</width>
-               <height>41</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Удалить</string>
-             </property>
-            </widget>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QPushButton" name="add_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Добавить пример</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="clone_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Дублировать</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="change_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Изменить</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="activate_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Активировать</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="move_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Переместить</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="delete_example_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Удалить</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
@@ -492,7 +613,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>882</width>
+     <width>917</width>
      <height>22</height>
     </rect>
    </property>

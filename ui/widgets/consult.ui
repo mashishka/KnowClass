@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>598</width>
-    <height>392</height>
+    <width>540</width>
+    <height>338</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Tahoma</family>
+    <pointsize>14</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>Режим консультации</string>
@@ -18,8 +24,9 @@
     <widget class="QLabel" name="question">
      <property name="font">
       <font>
-       <family>Times New Roman</family>
+       <family>Tahoma</family>
        <pointsize>16</pointsize>
+       <weight>75</weight>
        <bold>true</bold>
       </font>
      </property>
@@ -60,9 +67,10 @@
     <widget class="QListWidget" name="ans_list">
      <property name="font">
       <font>
-       <family>Times New Roman</family>
+       <family>Tahoma</family>
        <pointsize>14</pointsize>
-       <bold>true</bold>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="contextMenuPolicy">

@@ -14,6 +14,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, QItemSelection, Qt
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
+from ui.pyui.dialogs.AskItems import AskItems
 
 
 def same_value(value: ValueController | None, chosen: str):
@@ -55,12 +56,11 @@ class ConsultDialog(QDialog):
         loadUi("ui/widgets/consult.ui", self)
         self.setup_state: SetupState
 
-        mode, done = QInputDialog.getItem(
+        mode, done = AskItems.get_item(
             self,
             f"Консультация",
             "Выберите способ обработки коэффициента неопределённости:",
             ["Вероятностный", "Веса"],
-            editable=False,
         )
         if not done:
             self.reject()
@@ -129,7 +129,9 @@ class ConsultDialog(QDialog):
         for leaf in leafs:
             result_text = ResultController.get(self.db).get_value(leaf.label).text
             if self.mode == "Вероятностный":
-                text = f"{result_text}\n" + f"\tС вероятностью: {leaf.probability:.3f}\n"
+                text = (
+                    f"{result_text}\n" + f"\tС вероятностью: {leaf.probability:.3f}\n"
+                )
             else:
                 text = f"{result_text}\n" + f"\tС уверенностью: {leaf.weight:.3f}\n"
             result_list.append(text)
@@ -145,7 +147,9 @@ class ConsultDialog(QDialog):
 
         def correct_leaf(leaf: _LeafNode):
             examples_ = [
-                example.weight for example in exampels if example.result_value.name == leaf.label
+                example.weight
+                for example in exampels
+                if example.result_value.name == leaf.label
             ]
             leaf.weight = sum(examples_)
             leaf.probability *= len(examples_)
@@ -160,7 +164,8 @@ class ConsultDialog(QDialog):
             return
 
         unique_subnodes = sorted(
-            list({subnode.label: subnode for subnode in node}.values()), key=lambda node: node.label
+            list({subnode.label: subnode for subnode in node}.values()),
+            key=lambda node: node.label,
         )
         for subnode in unique_subnodes:
             correct_leaf(subnode)

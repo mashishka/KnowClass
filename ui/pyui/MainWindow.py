@@ -10,6 +10,10 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, pyqtSignal
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+from ui.pyui.dialogs.AskNameText import AskNameText, AskType
+from ui.pyui.dialogs.AskNumber import AskNumber
+from ui.pyui.dialogs.AskItems import AskItems
+
 from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
 
@@ -119,19 +123,13 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_create_kb(self):
-        name, done = QInputDialog.getText(
-            self, "Создать базу знаний", "Введите имя новой базы знаний:"
-        )
-        if done and name != "":
-            fname = QFileDialog.getExistingDirectory(
-                self,
-                "Выберите папку для сохранения базы знаний",
-                QDir.currentPath(),
-                QFileDialog.ShowDirsOnly,
-            )
 
-            path = PurePath(fname)
-            file_path = path / (name + ".db")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Выберите имя для базы знаний", QDir.currentPath()
+        )
+
+        if file_path != "":
+            file_path = PurePath(file_path + ".db")
 
             self._data = DataBase.create(file_path)
             self._open_kb(file_path)
@@ -175,7 +173,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9 alpha")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.2 alpha 2")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -211,7 +209,9 @@ class MainUI(QMainWindow):
                     self.text_line.setText(mod.get_fact_info(ind.column())[1])
                 else:
                     # выбрано значение фактора
-                    self.text_line.setText(mod.get_fact_val_info(ind.row(), ind.column())[1])
+                    self.text_line.setText(
+                        mod.get_fact_val_info(ind.row(), ind.column())[1]
+                    )
                 # =========================================================
             else:
                 # =========================================================
@@ -229,16 +229,13 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_factor(self):
-        name, done = QInputDialog.getText(self, "Создать фактор", "Введите имя нового фактора:")
-        if done and name != "":
-            text, done_t = QInputDialog.getMultiLineText(
-                self, "Создать фактор", "Введите текст нового фактора:"
-            )
-            if done_t:
-                mod = self.get_fact_model()
-                mod.add_factor(name, text)
-            else:
-                QMessageBox.information(self, "Фактор", "Отмена")
+        name, text, done = AskNameText.get_info(
+            self, "Создать фактор", "Введите текст фактора:", AskType.all
+        )
+
+        if done:
+            mod = self.get_fact_model()
+            mod.add_factor(name, text)
         else:
             pass
 
@@ -252,41 +249,30 @@ class MainUI(QMainWindow):
         fact_cnt = mod._factors_count()
         # =========================================================
         if ind.isValid() and ind.column() < fact_cnt:
-            name, done = QInputDialog.getText(
-                self, "Создать значение фактора", "Введите имя нового значения фактора:"
+            name, text, done = AskNameText.get_info(
+                self,
+                "Создать значение фактора",
+                "Введите текст нового значения фактора:",
+                AskType.all,
             )
-            if done and name != "":
-                text, done_t = QInputDialog.getMultiLineText(
-                    self,
-                    "Создать значение фактора",
-                    "Введите текст нового значения фактора:",
-                )
-                if done_t:
-                    mod.add_factor_value(name, text, ind.column())
-                else:
-                    # QMessageBox.information(self, "Фактор", "Отмена")
-                    pass
+
+            if done:
+                mod.add_factor_value(name, text, ind.column())
             else:
-                # QMessageBox.information(self, "Фактор", "Имя не выбрано")
                 pass
+
         # =========================================================
         else:
-            name, done = QInputDialog.getText(
-                self, "Создать результат", "Введите имя нового значения результата:"
+            name, text, done = AskNameText.get_info(
+                self,
+                "Создать результат",
+                "Введите текст нового значения результата:",
+                AskType.all,
             )
-            if done and name != "":
-                text, done_t = QInputDialog.getMultiLineText(
-                    self,
-                    "Создать результат",
-                    "Введите текст нового значения результата:",
-                )
-                if done_t:
-                    mod.add_result_value(name, text)
-                else:
-                    # QMessageBox.information(self, "Результат", "Отмена")
-                    pass
+            print("\n\n", text)
+            if done:
+                mod.add_result_value(name, text)
             else:
-                # QMessageBox.information(self, "Результат", "Имя не выбрано")
                 pass
 
     # Изменить текст
@@ -305,44 +291,48 @@ class MainUI(QMainWindow):
                 # =========================================================
                 if len(col_ind_list) > 0:
                     # выбран фактор (весь столбец)
-                    text, done_t = QInputDialog.getMultiLineText(
+                    text, done = AskNameText.get_info(
                         self,
                         "Изменить текст фактора",
                         "Введите новый текст фактора:",
+                        AskType.only_text,
                         mod.get_fact_info(ind.column())[1],
                     )
-                    if done_t:
+
+                    if done:
                         if mod.set_fact_text(ind.column(), text):
                             self.text_line.setText(text)
                     else:
-                        # QMessageBox.information(self, "", "Отмена")
                         pass
+
                 elif mod._check_model_index(ind):
                     # выбрано значение, причём с корректным индексом
-                    text, done_t = QInputDialog.getMultiLineText(
+                    text, done = AskNameText.get_info(
                         self,
                         "Изменить текст значения",
                         "Введите новый текст значения:",
+                        AskType.only_text,
                         mod.get_fact_val_info(ind.row(), ind.column())[1],
                     )
-                    if done_t:
+
+                    if done:
                         if mod.set_fact_val_text(ind.row(), ind.column(), text):
                             self.text_line.setText(text)
                     else:
-                        # QMessageBox.information(self, "", "Отмена")
                         pass
                 # =========================================================
             else:
                 # =========================================================
                 if len(col_ind_list) > 0:
                     # выбран результат (весь столбец)
-                    text, done_t = QInputDialog.getMultiLineText(
+                    text, done = AskNameText.get_info(
                         self,
                         "Изменить текст результата",
                         "Введите новый текст результата:",
+                        AskType.only_text,
                         mod.get_result_text(),
                     )
-                    if done_t:
+                    if done:
                         if mod.set_result_text(text):
                             self.text_line.setText(text)
                     else:
@@ -350,13 +340,14 @@ class MainUI(QMainWindow):
                         pass
                 elif mod._check_model_index(ind):
                     # выбрано значение результата, причём с корректным индексом
-                    text, done_t = QInputDialog.getMultiLineText(
+                    text, done = AskNameText.get_info(
                         self,
                         "Изменить текст значения",
                         "Введите новый текст значения:",
+                        AskType.only_text,
                         mod.get_result_val_info(ind.row())[1],
                     )
-                    if done_t:
+                    if done:
                         if mod.set_result_val_text(ind.row(), text):
                             self.text_line.setText(text)
                     else:
@@ -398,14 +389,16 @@ class MainUI(QMainWindow):
                 return
 
             cur_fact_name, cur_fact_text = mod.get_fact_info(ind.column())
-            pos, done_t = QInputDialog.getInt(
+
+            pos, done = AskNumber.get_int(
                 self,
                 f"Переместить фактор {cur_fact_name}",
                 "Введите новую позицию фактора (начиная с нуля):",
                 ind.column(),
                 0,
             )
-            if done_t:
+
+            if done:
                 if not mod.move_factor_to(ind.column(), pos):
                     QMessageBox.warning(
                         self,
@@ -422,16 +415,18 @@ class MainUI(QMainWindow):
             if ind.column() == fact_cnt:
                 cur_val_name, cur_val_text = mod.get_result_val_info(ind.row())
             else:
-                cur_val_name, cur_val_text = mod.get_fact_val_info(ind.row(), ind.column())
+                cur_val_name, cur_val_text = mod.get_fact_val_info(
+                    ind.row(), ind.column()
+                )
 
-            pos, done_t = QInputDialog.getInt(
+            pos, done = AskNumber.get_int(
                 self,
                 f"Переместить значение {cur_val_name}",
                 "Введите новую позицию значения (начиная с нуля):",
                 ind.row(),
                 0,
             )
-            if done_t:
+            if done:
                 if not mod.move_value_to(ind.row(), ind.column(), pos):
                     QMessageBox.warning(
                         self,
@@ -530,12 +525,14 @@ class MainUI(QMainWindow):
     def on_add_example(self):
         mod = self.get_ex_model()
         lst = mod.get_list_res_val()
-        name, done = QInputDialog.getItem(
+
+        name, done = AskItems.get_item(
             self,
             "Создать пример",
             "Выберите значение результата для примера:",
             lst,
         )
+
         if done and name != "":
             mod.add_example(name)
         else:
@@ -561,7 +558,8 @@ class MainUI(QMainWindow):
             # изменить значение фактора
             f_name, val_list = mod.get_list_fact_val(cur_ind.column())
             # TODO: в таких диалогах чекать возвращаемое имя -- он позволяет вернуть любую строку
-            name, done = QInputDialog.getItem(
+
+            name, done = AskItems.get_item(
                 self,
                 f"Фактор {f_name}",
                 "Выберите значение фактора для примера:",
@@ -574,14 +572,11 @@ class MainUI(QMainWindow):
         # =========================================================
         elif cur_ind.column() == f_cnt:
             # изменить вес примера
-            # TODO: изменить локаль, чтобы показывало точку
-            # TODO: как-то добавить параметр steps (=0.05)
-            weight, done = QInputDialog.getDouble(
+            weight, done = AskNumber.get_double(
                 self,
                 f"Вес примера",
                 "Выберите значение веса для примера:",
                 1.0,
-                decimals=2,
             )
             if done:
                 mod.change_ex_weight(cur_ind.row(), weight)
@@ -591,7 +586,8 @@ class MainUI(QMainWindow):
         else:
             # изменить значение результата примера
             lst = mod.get_list_res_val()
-            name, done = QInputDialog.getItem(
+
+            name, done = AskItems.get_item(
                 self,
                 f"Результат",
                 "Выберите значение результата для примера:",
@@ -616,13 +612,14 @@ class MainUI(QMainWindow):
         mod = self.get_ex_model()
         cur_ind = self.example_table.currentIndex()
 
-        pos, done_t = QInputDialog.getInt(
+        pos, done_t = AskNumber.get_int(
             self,
             f"Переместить пример {str(cur_ind.row() + 1)}",
             "Введите новый номер примера (начиная с единицы):",
             cur_ind.row() + 1,
             1,
         )
+
         if done_t:
             if not mod.move_example_to(cur_ind.row(), pos - 1):
                 QMessageBox.warning(
@@ -748,12 +745,11 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_rebuild_tree_button_clicked(self, *args, **kwargs):
-        name, done = QInputDialog.getItem(
+        name, done = AskItems.get_item(
             self,
             f"Режим",
             "Выберите способ построения дерева:",
-            ["Optimize", "Left-toRight"],
-            editable=False,
+            ["Optimize", "Left-to-Right"],
         )
         if done:
             if name == "Optimize":
@@ -907,7 +903,9 @@ class MainUI(QMainWindow):
         # таблица факторов
         self.definition_table.setModel(None)
         self.definition_table.setModel(modelf)
-        self.definition_table.selectionModel().currentChanged.connect(self.on_def_select)
+        self.definition_table.selectionModel().currentChanged.connect(
+            self.on_def_select
+        )
         self.definition_table.selectionModel().currentChanged.connect(self.on_text_show)
 
         # таблица примеров

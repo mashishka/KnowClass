@@ -1,5 +1,5 @@
 sqlacodegen==3.0.0rc5
 pytest
-coverage
+pytest-cov
 pyqt5-stubs
 pandas-stubs

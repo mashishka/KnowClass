@@ -15,7 +15,7 @@ from data_utils.core import DataBase
 
 from tree.TreeClass import _DecisionNode, TreeType, is_leaf
 from tree.create_tree import MethodType, create_tree
-from ui.pyui.Consult import consult
+from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
 from ui.pyui.utils import error_window
@@ -159,25 +159,13 @@ class MainUI(QMainWindow):
         self._close_kb()
         self.close()
 
-    # TODO: консультация
     # Консультация->Начать консультацию
     @pyqtSlot()
     @error_window
     def on_consult(self):
         # QMessageBox.information(self, "Консультация", "В разработке")
         if self.is_actual_tree():
-            name, done = QInputDialog.getItem(
-                self,
-                f"Консультация",
-                "Выберите способ обработки коэффициента неопределённости:",
-                ["Вероятностный", "Веса"],
-                editable=False
-            )
-            if done:
-                consult(self, self._data, TreeController.get(self._data).data, name)
-            else:
-                pass
-
+            ConsultDialog(self._data).exec_()
         else:
             QMessageBox.warning(
                 self, "Консультация", "Текущее дерево не актуально\nПерестройте дерево"
@@ -223,9 +211,7 @@ class MainUI(QMainWindow):
                     self.text_line.setText(mod.get_fact_info(ind.column())[1])
                 else:
                     # выбрано значение фактора
-                    self.text_line.setText(
-                        mod.get_fact_val_info(ind.row(), ind.column())[1]
-                    )
+                    self.text_line.setText(mod.get_fact_val_info(ind.row(), ind.column())[1])
                 # =========================================================
             else:
                 # =========================================================
@@ -243,9 +229,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_factor(self):
-        name, done = QInputDialog.getText(
-            self, "Создать фактор", "Введите имя нового фактора:"
-        )
+        name, done = QInputDialog.getText(self, "Создать фактор", "Введите имя нового фактора:")
         if done and name != "":
             text, done_t = QInputDialog.getMultiLineText(
                 self, "Создать фактор", "Введите текст нового фактора:"
@@ -438,9 +422,7 @@ class MainUI(QMainWindow):
             if ind.column() == fact_cnt:
                 cur_val_name, cur_val_text = mod.get_result_val_info(ind.row())
             else:
-                cur_val_name, cur_val_text = mod.get_fact_val_info(
-                    ind.row(), ind.column()
-                )
+                cur_val_name, cur_val_text = mod.get_fact_val_info(ind.row(), ind.column())
 
             pos, done_t = QInputDialog.getInt(
                 self,
@@ -925,9 +907,7 @@ class MainUI(QMainWindow):
         # таблица факторов
         self.definition_table.setModel(None)
         self.definition_table.setModel(modelf)
-        self.definition_table.selectionModel().currentChanged.connect(
-            self.on_def_select
-        )
+        self.definition_table.selectionModel().currentChanged.connect(self.on_def_select)
         self.definition_table.selectionModel().currentChanged.connect(self.on_text_show)
 
         # таблица примеров
@@ -1014,7 +994,7 @@ class MainUI(QMainWindow):
         return self.example_table.model()  # type: ignore
 
     def is_actual_tree(self):
-        return self._tree_is_actual
+        return self._tree_is_actual and TreeController.get(self._data).data is not None
 
     @pyqtSlot()
     def set_actual_tree(self):

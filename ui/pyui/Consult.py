@@ -15,6 +15,7 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, QItemSelection,
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 from ui.pyui.dialogs.AskItems import AskItems
+from ui.pyui.dialogs.AskWorkMode import WorkMode
 
 
 def same_value(value: ValueController | None, chosen: str):
@@ -49,25 +50,18 @@ class ConsultDialog(QDialog):
     ans_btn: QPushButton
     close_btn: QPushButton
 
-    def __init__(self, db: DataBase):
-        QDialog.__init__(self)
+    def __init__(
+        self, parent, db: DataBase, mode: WorkMode, min_val: float | None = None
+    ):
+        super(ConsultDialog, self).__init__(parent)
         self.selected = False
 
         loadUi("ui/widgets/consult.ui", self)
         self.setup_state: SetupState
 
-        mode, done = AskItems.get_item(
-            self,
-            f"Консультация",
-            "Выберите способ обработки коэффициента неопределённости:",
-            ["Вероятностный", "Веса"],
-        )
-        if not done:
-            self.reject()
-            return
-
         self.db = db
         self.mode = mode
+        self.min_val = min_val
         self.state = TreeConsultState(  # -> раньше проверка идёт?
             node=TreeController.get(db).data,  # type: ignore
             examples=ExampleController.get_all(db),
@@ -126,9 +120,27 @@ class ConsultDialog(QDialog):
 
     def show_result(self, leafs: list[_LeafNode]):
         result_list = []
-        for leaf in leafs:
+
+        def sort_key(elem: _LeafNode):
+            return (
+                elem.probability if self.mode == WorkMode.probability else elem.weight
+            )
+
+        sort_leafs = list(sorted(leafs, key=sort_key, reverse=True))
+
+        # пока что отсечение ниже порога есть только для режима весов
+        if self.min_val is not None:
+
+            def low_pruning(elem: _LeafNode):
+                return elem.weight >= self.min_val
+
+            sort_leafs = list(filter(low_pruning, sort_leafs))
+
+        # TODO: что делать, если отфильтровались все ответы?
+
+        for leaf in sort_leafs:
             result_text = ResultController.get(self.db).get_value(leaf.label).text
-            if self.mode == "Вероятностный":
+            if self.mode == WorkMode.probability:
                 text = (
                     f"{result_text}\n" + f"\tС вероятностью: {leaf.probability:.3f}\n"
                 )

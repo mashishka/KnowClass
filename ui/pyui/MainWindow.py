@@ -13,6 +13,7 @@ from PyQt5.uic import loadUi  # type: ignore
 from ui.pyui.dialogs.AskNameText import AskNameText, AskType
 from ui.pyui.dialogs.AskNumber import AskNumber
 from ui.pyui.dialogs.AskItems import AskItems
+from ui.pyui.dialogs.AskWorkMode import AskWorkMode
 
 from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
@@ -163,7 +164,10 @@ class MainUI(QMainWindow):
     def on_consult(self):
         # QMessageBox.information(self, "Консультация", "В разработке")
         if self.is_actual_tree():
-            ConsultDialog(self._data).exec_()
+            mode, done, val = AskWorkMode.get_mode(self)
+            if done:
+                ConsultDialog(self, self._data, mode, val).exec_()
+
         else:
             QMessageBox.warning(
                 self, "Консультация", "Текущее дерево не актуально\nПерестройте дерево"
@@ -173,7 +177,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.2 alpha 2")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.3 alpha 2")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------

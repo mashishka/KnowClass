@@ -9,6 +9,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QColor
 
 from data_utils.controllers.ExampleController import ExampleController
 from data_utils.controllers.FactorController import FactorController
@@ -24,6 +25,13 @@ class ExamplesModel(QAbstractTableModel):
     __start_row_count: int = 0
 
     sig_invalidate = pyqtSignal()
+
+    # стандартный цвет
+    default_color: QColor = QColor(255, 255, 255)
+    # цвет помеченного примера
+    ex_color: QColor = QColor(155, 155, 255)
+    # список позиций для разметки примеров
+    color_list: list[int] = []
 
     def __init__(self, db: DataBase, parent=None):
         QAbstractTableModel.__init__(self, parent)
@@ -51,6 +59,7 @@ class ExamplesModel(QAbstractTableModel):
         ]
 
         def invalidate(*args, **kwargs):
+            self.color_list = []
             self._cache.invalidate_all()
 
         for signal in invalidate_signals:
@@ -97,6 +106,10 @@ class ExamplesModel(QAbstractTableModel):
             # выравнивание
             if role == Qt.TextAlignmentRole:
                 return Qt.AlignVCenter + Qt.AlignHCenter
+            if role == Qt.BackgroundRole:
+                if index.row() in self.color_list:
+                    return self.ex_color
+                return self.default_color
         return QVariant()
 
     def headerData(self, col, orientation, role):
@@ -243,3 +256,10 @@ class ExamplesModel(QAbstractTableModel):
 
         self.move_example_to(new_ex.position, pos + 1)
         self.sig_invalidate.emit()
+
+    # пометить примеры цветом;
+    # lst -- список id примеров (получается из функции completeness), которые нужно раскрасить
+    def mark_examples(self, lst: list[int]):
+        self.color_list = [
+            ExampleController.get(self._db, ex_id).position for ex_id in lst
+        ]

@@ -8,7 +8,11 @@ import pandas as pd
 from tree.create_tree import make_dataframe
 
 
-def _all_paths(tree: TreeType, current_path=[], paths=[]) -> list:
+def _all_paths(tree: TreeType, current_path=None, paths=None) -> list:
+    if current_path is None:
+        current_path = []
+    if paths is None:
+        paths = []
     if not is_leaf(tree):
         current_path.append(tree.attribute)
         for key, value in tree.children.items():
@@ -29,7 +33,7 @@ def _all_paths(tree: TreeType, current_path=[], paths=[]) -> list:
 
 def all_paths(tree: TreeType):
     paths = []
-    paths = _all_paths(tree, current_path=[], paths=[])
+    paths = _all_paths(tree)
     ans = []
     for path in paths:
         tmp = []

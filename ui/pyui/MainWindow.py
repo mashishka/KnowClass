@@ -20,6 +20,8 @@ from data_utils.core import DataBase
 
 from tree.TreeClass import _DecisionNode, TreeType, is_leaf
 from tree.create_tree import MethodType, create_tree
+from tree.check_tree import completeness
+
 from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
@@ -94,7 +96,7 @@ class MainUI(QMainWindow):
         self.activate_factor_button.setVisible(False)
         self.activate_example_button.setVisible(False)
         self.tree_button_box.setVisible(False)
-        self.test_tree_button.setVisible(False)
+        # self.test_tree_button.setVisible(False)
 
         # connetions
         self._connect_all()
@@ -768,7 +770,30 @@ class MainUI(QMainWindow):
         tree = TreeController.get(self._data).data
         self.sig_actual.emit()
         self.show_tree(tree)
+
         self.actual_label.setText(f"{self.actual_label.text()}; метод {name}")
+        mod = self.get_ex_model()
+        mod.mark_examples([])
+
+    @pyqtSlot()
+    @error_window
+    def on_test_tree_button_clicked(self, *args, **kwargs):
+        tree = TreeController.get(self._data).data
+        marked_list = completeness(tree, self._data)
+
+        if len(marked_list) > 0:
+            add_str = "\n\nНеподходящие примеры помечены на вкладке Примеры"
+        else:
+            add_str = ""
+
+        QMessageBox.information(
+            self,
+            "Тест на полноту",
+            f"Количество примеров, не подходящих дереву: {len(marked_list)}. {add_str}",
+        )
+
+        mod = self.get_ex_model()
+        mod.mark_examples(marked_list)
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -963,6 +988,7 @@ class MainUI(QMainWindow):
 
     def _update_tree_buttons(self):
         self.rebuild_tree_button.setDisabled(self._data is None)
+        self.test_tree_button.setDisabled(self._data is None)
 
     def _update_buttons(self):
         self._update_definitions_buttons()

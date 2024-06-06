@@ -18,9 +18,11 @@ class MethodType(Enum):
 def make_dataframe(db: DataBase) -> pd.DataFrame:
     data = {}
     factors = [
-        FactorController.get_by_position(db, i) for i in range(FactorController.get_count(db))
+        FactorController.get_by_position(db, i)
+        for i in range(FactorController.get_count(db))
     ]
     examples = [example for example in ExampleController.get_all(db) if example.active]
+    ids = [example.id for example in ExampleController.get_all(db) if example.active]
 
     def get_value_or_none(factor: FactorController, example: ExampleController):
         val = example.get_value(factor)
@@ -30,7 +32,9 @@ def make_dataframe(db: DataBase) -> pd.DataFrame:
         data[factor.name] = [get_value_or_none(factor, example) for example in examples]
     data["RESULT"] = [example.result_value.name for example in examples]
     data["weight"] = [example.weight for example in examples]
-    return pd.DataFrame(data).fillna("*")
+    df = pd.DataFrame(data).fillna("*")
+    df = df.set_index(pd.Index(ids))
+    return df
 
 
 def create_tree(db: DataBase, method: MethodType):

@@ -1,66 +1,89 @@
-from TreeClass import _DecisionNode, _LeafNode
+from tree.TreeClass import *
 from data_utils.controllers.ExampleController import *
 from data_utils.controllers.FactorController import *
 from data_utils.controllers.TreeController import *
 from data_utils.core import DataBase
-from pathlib import Path, PurePath
+import pandas as pd
 
 from tree.create_tree import make_dataframe
 
 
-def in_tree(tree, factor, example) -> bool:
-    
-    if tree.attribute == factor and example in tree.children.keys():
-        return True
-    
-    for child in tree.children.keys():
-        if type(tree.children[child]) != list:
-            if in_tree(tree.children[child], factor, example):
-                return True
-            
-    return False
-
-
-def in_leaf(tree, result, weight):
-    if type(tree) == list:
-        for child in tree:
-            if child.label == result and child.weight == weight:
-                return True
+def _all_paths(tree: TreeType, current_path=[], paths=[]) -> list:
+    if not is_leaf(tree):
+        current_path.append(tree.attribute)
+        for key, value in tree.children.items():
+            temp_path = current_path.copy()
+            temp_path.append(key)
+            _all_paths(value, temp_path, paths)
     else:
-        if tree.children:
-            for child in tree.children:
-                if in_leaf(tree.children[child], result, weight):
-                    return True
-        else:
-            if tree.label == result and tree.weight == weight:
-                return True
-    return False
+        for t in tree:
+            _current_path = current_path.copy()
+            _current_path.append("RESULT")
+            _current_path.append(t.label)
+            _current_path.append("weight")
+            _current_path.append(t.weight)
+            paths.append(_current_path)
 
-def completeness(db: DataBase) -> dict:
-    ans = {}
-    tree = TreeController.get(db).data
-    df = make_dataframe(db)
-    for factor in df.columns:
-        if factor != "RESULT":
-            examples = list(set(df[factor]))
-            if "*" in examples:
-                examples.remove("*")
-            for example in examples:
-                if not in_tree(tree, factor, example):
-                    ans[factor] = example
-        else:
-            for i in range(len(df["RESULT"])):
-                result = df["RESULT"][i]
-                weight = df["weight"][i]
-                if not in_leaf(tree, result, weight):
-                    ans["RESULT"] = result
-            return ans
-        
+    return paths
+
+
+def all_paths(tree: TreeType):
+    paths = []
+    paths = _all_paths(tree, current_path=[], paths=[])
+    ans = []
+    for path in paths:
+        tmp = []
+        for i in range(1, len(path), 2):
+            tmp.append([path[i - 1], path[i]])
+        ans.append(tmp)
     return ans
 
 
-path = PurePath("C:\\Users\\maria\\Desktop\\KnowClass-main\\KnowClass-main\\res\\kb_examples\\hudlit.db")
-db = DataBase.load(path)
-tree = TreeController.get(db).data
+def find_path(paths: list, rool: list) -> list:
+    # paths = all_paths(tree)
+    ans = []
+    for path in paths:
+        if (
+            path[len(path) - 2] == rool[len(rool) - 2]
+            and path[len(path) - 1] == rool[len(rool) - 1]
+        ):
+            ans.append(path)
+    return ans
 
-completeness(db)
+
+def find(example: list, rool: list):
+    for r in rool:
+        if r == example:
+            return True
+    return False
+
+
+def running(path: list, rool: list) -> bool:
+    path_ = path.copy()
+    for node in path:
+        if find(node, rool):
+            path_.remove(node)
+    if path_ == []:
+        return True
+    return False
+
+
+def completeness(
+    tree: TreeType, db: DataBase
+) -> list:  # возвращает примеры, которых нет в дереве
+    df = make_dataframe(db)
+    tree_paths = all_paths(tree)
+    cols = df.columns
+    indices = []
+    for index, row in df.iterrows():
+        rool = []
+        for col in cols:
+            rool.append([col, row[col]])
+        paths = find_path(tree_paths, rool)
+        if paths == []:
+            indices.append(index)
+        else:
+            for path in paths:
+                if not running(rool=rool, path=path):
+                    indices.append(index)
+    return indices

@@ -87,7 +87,11 @@ def completeness(
         if paths == []:
             indices.append(index)
         else:
+            tmp = 0
             for path in paths:
                 if not running(rool=rool, path=path):
-                    indices.append(index)
+                    tmp += 1
+                    #indices.append(index)
+            if tmp == len(paths):
+                indices.append(index)
     return indices

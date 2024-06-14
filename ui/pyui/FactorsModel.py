@@ -180,8 +180,8 @@ class FactorsModel(QAbstractTableModel):
 
         if res_count == r_cnt:
             self.beginInsertRows(QModelIndex(), res_count, res_count)
-        res.make_value(name)
-        res.text = text
+        val = res.make_value(name)
+        val.text = text
         if res_count == r_cnt:
             self.endInsertRows()
         self.sig_local_invalidate.emit()

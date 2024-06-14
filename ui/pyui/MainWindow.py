@@ -198,38 +198,31 @@ class MainUI(QMainWindow):
             for btn in self.__all_def_buttons([1, 2]):
                 btn.setEnabled(False)
 
-    # отображение текста текущего выделения
-    @pyqtSlot(QModelIndex, QModelIndex)
-    def on_text_show(self, ind: QModelIndex, prev: QModelIndex):
+    # отображение текста текущего фактора
+    @pyqtSlot(int)
+    def on_col_text_show(self, col_pos: int):
         mod = self.get_fact_model()
         fact_cnt = mod._factors_count()
 
-        sel_mod = self.definition_table.selectionModel()
-        col_ind_list = sel_mod.selectedColumns()
-
-        if ind.isValid():
-            if ind.column() < fact_cnt:
-                # =========================================================
-                if len(col_ind_list) > 0:
-                    # выбран фактор (весь столбец)
-                    self.text_line.setText(mod.get_fact_info(ind.column())[1])
-                else:
-                    # выбрано значение фактора
-                    self.text_line.setText(
-                        mod.get_fact_val_info(ind.row(), ind.column())[1]
-                    )
-                # =========================================================
-            else:
-                # =========================================================
-                if len(col_ind_list) > 0:
-                    # выбран столбец результатов (весь)
-                    self.text_line.setText(mod.get_result_text())
-                else:
-                    # выбрано значение результата
-                    self.text_line.setText(mod.get_result_val_info(ind.row())[1])
-                # =========================================================
+        if col_pos < fact_cnt:
+            self.text_line.setText(mod.get_fact_info(col_pos)[1])
         else:
+            self.text_line.setText(mod.get_result_text())
+
+    # отображение текста текущего выделения
+    @pyqtSlot(QModelIndex, QModelIndex)
+    def on_item_text_show(self, ind: QModelIndex, prev: QModelIndex):
+        mod = self.get_fact_model()
+        fact_cnt = mod._factors_count()
+
+        if not ind.isValid():
             self.text_line.setText("")
+            return
+
+        if ind.column() < fact_cnt:
+            self.text_line.setText(mod.get_fact_val_info(ind.row(), ind.column())[1])
+        else:
+            self.text_line.setText(mod.get_result_val_info(ind.row())[1])
 
     # Добавить фактор
     @pyqtSlot()
@@ -238,12 +231,9 @@ class MainUI(QMainWindow):
         name, text, done = AskNameText.get_info(
             self, "Создать фактор", "Введите текст фактора:", AskType.all
         )
-
         if done:
             mod = self.get_fact_model()
             mod.add_factor(name, text)
-        else:
-            pass
 
     # Добавить значение
     @pyqtSlot()
@@ -261,12 +251,8 @@ class MainUI(QMainWindow):
                 "Введите текст нового значения фактора:",
                 AskType.all,
             )
-
             if done:
                 mod.add_factor_value(name, text, ind.column())
-            else:
-                pass
-
         # =========================================================
         else:
             name, text, done = AskNameText.get_info(
@@ -275,11 +261,8 @@ class MainUI(QMainWindow):
                 "Введите текст нового значения результата:",
                 AskType.all,
             )
-            print("\n\n", text)
             if done:
                 mod.add_result_value(name, text)
-            else:
-                pass
 
     # Изменить текст
     @pyqtSlot()
@@ -935,7 +918,12 @@ class MainUI(QMainWindow):
         self.definition_table.selectionModel().currentChanged.connect(
             self.on_def_select
         )
-        self.definition_table.selectionModel().currentChanged.connect(self.on_text_show)
+        self.definition_table.selectionModel().currentChanged.connect(
+            self.on_item_text_show
+        )
+        self.definition_table.horizontalHeader().sectionClicked.connect(
+            self.on_col_text_show
+        )
 
         # таблица примеров
         self.example_table.setModel(None)

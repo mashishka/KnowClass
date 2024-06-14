@@ -56,6 +56,9 @@ def create_tree(db: DataBase, method: MethodType):
     else:
         raise ValueError("Invalid method. Please choose either 'c45' or 'l2r'.")
 
+    from tree.NoData import add_nodata
+
+    tree = add_nodata(tree, db)
     tree_controller = TreeController.get(db)
     tree_controller.data = tree
     return tree

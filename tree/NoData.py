@@ -24,14 +24,14 @@ def find_nodata_definitions(db: DataBase) -> list:
 
 def _add_nodata(new_tree: TreeType, factor: str, value: str):
     if not is_leaf(new_tree):
-        if new_tree.attribute == factor:
-            new_tree.add_child(
+        if new_tree.attribute == factor:  # type: ignore
+            new_tree.add_child(  # type: ignore
                 value, [_LeafNode(label="No-data", weight=0.00, probability=0.0)]
             )
             return new_tree
         else:
-            for child in new_tree.children.keys():
-                _add_nodata(new_tree.children[child], factor, value)
+            for child in new_tree.children.keys():  # type: ignore
+                _add_nodata(new_tree.children[child], factor, value)  # type: ignore
 
 
 def add_nodata(tree: TreeType, db: DataBase) -> TreeType:

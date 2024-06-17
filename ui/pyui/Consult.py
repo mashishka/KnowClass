@@ -155,12 +155,13 @@ class ConsultDialog(QDialog):
 
     def _next_state(self) -> None:
         node = self.state.node
-        exampels = self.state.examples
+        examples = self.state.examples
 
+        # TODO: проверить пересчёт весов
         def correct_leaf(leaf: _LeafNode):
             examples_ = [
                 example.weight
-                for example in exampels
+                for example in examples
                 if example.result_value.name == leaf.label
             ]
             leaf.weight = sum(examples_)

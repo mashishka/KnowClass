@@ -12,6 +12,32 @@ from pathlib import Path, PurePath
 import copy
 
 
+# рекурсивно добавить ко всем узлам отсутствующие значения
+def alt_add_nodata(tree: TreeType, db: DataBase) -> TreeType:
+    if isinstance(tree, (_LeafNode, list)):
+        return tree
+
+    child_names = []
+    for atr, child in tree.children.items():
+        child_names.append(atr)
+        alt_add_nodata(child, db)
+
+    name = tree.attribute
+    factor = FactorController.get(db, name)
+
+    val_names = [value.name for value in factor.get_values()]
+    for val in val_names:
+        if val not in child_names:
+            tree.add_child(
+                val, [_LeafNode(label="no-data", weight=0.00, probability=0.0)]
+            )
+
+    return tree
+
+
+# ========================================================================================
+
+
 def find_nodata_definitions(db: DataBase) -> list:
     df = make_dataframe(db)
     nodata = []

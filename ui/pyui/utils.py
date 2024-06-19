@@ -4,6 +4,13 @@ from functools import wraps
 from PyQt5.QtWidgets import *
 
 
+# Элемент отображения дерева, дополнительно хранит список примеров своего узла
+class ExtendedTreeItem(QTreeWidgetItem):
+    def __init__(self, examples: list[int], parent=None):
+        super(ExtendedTreeItem, self).__init__(parent)
+        self.node_examples = examples
+
+
 # QMessageBox.critical при исключении в методе
 def error_window(f):
     @wraps(f)

@@ -9,7 +9,6 @@ from data_utils.controllers.ResultController import ResultController
 from data_utils.core import DataBase
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType
 
-from tree.TreeClass import _DecisionNode, _LeafNode, TreeType
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, QItemSelection, Qt
 from PyQt5.QtWidgets import *
@@ -63,7 +62,7 @@ class ConsultDialog(QDialog):
         self.mode = mode
         self.min_val = min_val
         self.state = TreeConsultState(  # -> раньше проверка идёт?
-            node=TreeController.get(db).data,  # type: ignore
+            node=TreeController.get(db).data.tree,  # type: ignore
             examples=ExampleController.get_all(db),
         )
         self._next_state()
@@ -87,6 +86,7 @@ class ConsultDialog(QDialog):
 
         examples = self.state.examples
 
+        # TODO: использовать примеры напрямую из дерева
         next_examples = [
             example
             for example in examples

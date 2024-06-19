@@ -258,7 +258,7 @@ class ExamplesModel(QAbstractTableModel):
         self.sig_invalidate.emit()
 
     # пометить примеры цветом;
-    # lst -- список id примеров (получается из функции completeness), которые нужно раскрасить
+    # lst -- список id примеров (например, из функции completeness), которые нужно раскрасить
     def mark_examples(self, lst: list[int]):
         self.color_list = [
             ExampleController.get(self._db, ex_id).position for ex_id in lst

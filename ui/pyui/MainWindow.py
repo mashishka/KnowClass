@@ -18,14 +18,13 @@ from ui.pyui.dialogs.AskWorkMode import AskWorkMode
 from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
 
-from tree.TreeClass import _DecisionNode, TreeType, is_leaf
-from tree.create_tree import MethodType, create_tree
-from tree.check_tree import completeness
+from tree.TreeClass import _DecisionNode, _LeafNode, TreeType, MethodType
+from tree.utils import create_tree, completeness
 
 from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
-from ui.pyui.utils import error_window
+from ui.pyui.utils import error_window, ExtendedTreeItem
 
 # from treelib import Node, Tree  # type: ignore
 
@@ -77,6 +76,10 @@ class MainUI(QMainWindow):
     rebuild_tree_button: QPushButton
     test_tree_button: QPushButton
     tree_button_box: QFrame
+    mark_button: QPushButton
+    expand_button: QPushButton
+    collapse_button: QPushButton
+    delete_tree_button: QPushButton
 
     # -------------------------------
 
@@ -84,9 +87,6 @@ class MainUI(QMainWindow):
     _data: DataBase | None = None
     _settings_name: str = "settings.ini"
     _count_last_kb: int = 5
-    _tree_is_actual: bool = False
-
-    sig_actual = pyqtSignal()
 
     def __init__(self):
         QMainWindow.__init__(self)
@@ -95,8 +95,6 @@ class MainUI(QMainWindow):
         # механика активности факторов/примеров не реализуется
         self.activate_factor_button.setVisible(False)
         self.activate_example_button.setVisible(False)
-        self.tree_button_box.setVisible(False)
-        # self.test_tree_button.setVisible(False)
 
         # connetions
         self._connect_all()
@@ -105,8 +103,7 @@ class MainUI(QMainWindow):
         self._set_last_menu()
 
         # активность кнопок
-        self._update_definitions_buttons()
-        self._update_examples_buttons()
+        self._update_buttons()
 
     # слоты для пунктов меню
     # ------------------------------------------------------------------------
@@ -179,7 +176,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.3 alpha 2")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.4 alpha")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -685,52 +682,56 @@ class MainUI(QMainWindow):
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
 
+    # загрузить дерево и отобразить
     def load_tree(self):
-        tree = TreeController.get(self._data).data
-        if tree is not None:
-            self.show_tree(tree)
-            self.sig_actual.emit()
+        root = TreeController.get(self._data).data
+        if root is not None:
+            self.show_tree(root.tree)
+            self.set_actual_status(root.actual, root.method)
+            self._update_buttons()
+        else:
+            self.set_none_status()
 
+    # TODO: tree -- какой именно тип?
+    # показать дерево
     def show_tree(self, tree: _DecisionNode):
         self.tree_widget.setColumnCount(2)
         self.tree_widget.setHeaderLabels(["Rules", "Results"])
 
         # это простой метод обхода
-        def tree_print(root_item: QTreeWidgetItem, tree: TreeType):
+        def tree_print(root_item: ExtendedTreeItem, tree: TreeType):
+            if isinstance(tree, _LeafNode):
+                widg_item = ExtendedTreeItem(tree.examples_list, root_item)
 
-            if is_leaf(tree):
-                # print(tree.label)
-                widg_item = QTreeWidgetItem(root_item)
-
-                widg_item.setText(1, tree.label)  # type: ignore
+                widg_item.setText(1, tree.label)
                 root_item.addChild(widg_item)
             else:
-                # print(tree)
-                # print(tree.children)
                 for atr, child in tree.children.items():
-                    widg_item = QTreeWidgetItem(root_item)
-
                     if isinstance(child, list):
+                        tmp_lst = []
+                        for node in child:
+                            tmp_lst += node.examples_list
+                        widg_item = ExtendedTreeItem(tmp_lst, root_item)
                         widg_item.setText(0, f"{atr}: ")
                         root_item.addChild(widg_item)
                         for node in child:
-                            # print("type node", type(node))
                             tree_print(widg_item, node)
 
                     else:
-                        # print(child, type(child))
+                        widg_item = ExtendedTreeItem(child.examples_list, root_item)
                         widg_item.setText(0, f"{atr}: {child.attribute}??")
 
                         tree_print(widg_item, child)
                         root_item.addChild(widg_item)
 
-        root_item = QTreeWidgetItem(self.tree_widget)
+        root_item = ExtendedTreeItem(tree.examples_list, self.tree_widget)
         root_item.setText(0, tree.attribute)
 
         tree_print(root_item, tree)
 
         self.tree_widget.expandAll()
 
+    # Перестроить дерево
     @pyqtSlot()
     @error_window
     def on_rebuild_tree_button_clicked(self, *args, **kwargs):
@@ -750,19 +751,22 @@ class MainUI(QMainWindow):
 
         self.tree_widget.clear()
         create_tree(self._data, meth)
-        tree = TreeController.get(self._data).data
-        self.sig_actual.emit()
-        self.show_tree(tree)
+        root = TreeController.get(self._data).data
 
-        self.actual_label.setText(f"{self.actual_label.text()}; метод {name}")
+        self.show_tree(root.tree)
+        self.set_actual_status(root.actual, root.method)
+
         mod = self.get_ex_model()
         mod.mark_examples([])
 
+        self._update_buttons()
+
+    # Тест
     @pyqtSlot()
     @error_window
     def on_test_tree_button_clicked(self, *args, **kwargs):
-        tree = TreeController.get(self._data).data
-        marked_list = completeness(tree, self._data)
+        root = TreeController.get(self._data).data
+        marked_list = completeness(root.tree, self._data)
 
         if len(marked_list) > 0:
             add_str = "\n\nНеподходящие примеры помечены на вкладке Примеры"
@@ -777,6 +781,55 @@ class MainUI(QMainWindow):
 
         mod = self.get_ex_model()
         mod.mark_examples(marked_list)
+
+    # Пометить пример
+    @pyqtSlot()
+    @error_window
+    def on_mark_button_clicked(self):
+        marked_list = self.tree_widget.currentItem().node_examples
+
+        mod = self.get_ex_model()
+        mod.mark_examples([])
+        mod.mark_examples(marked_list)
+        QMessageBox.information(
+            self,
+            "Пометить пример",
+            "Соответствующие примеры выделены на вкладке Примеры",
+        )
+
+    # TODO: добавить кнопку Снять выделение
+
+    # Развернуть дерево
+    @pyqtSlot()
+    @error_window
+    def on_expand_button_clicked(self):
+        self.tree_widget.expandAll()
+
+    # Свернуть дерево
+    @pyqtSlot()
+    @error_window
+    def on_collapse_button_clicked(self):
+        self.tree_widget.collapseAll()
+
+    # Удалить дерево
+    @pyqtSlot()
+    @error_window
+    def on_delete_tree_button_clicked(self):
+        TreeController.get(self._data).data = None
+        self.tree_widget.clear()
+        self.set_none_status()
+        self._update_buttons()
+
+        mod = self.get_ex_model()
+        mod.mark_examples([])
+
+    @pyqtSlot(QModelIndex, QModelIndex)
+    @error_window
+    def mark_button_select(self, ind: QModelIndex, prev: QModelIndex):
+        if ind.isValid():
+            self.mark_button.setEnabled(True)
+        else:
+            self.mark_button.setEnabled(False)
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -910,7 +963,6 @@ class MainUI(QMainWindow):
         modelf.sig_invalidate.connect(modele.sig_invalidate)
         modelf.sig_invalidate.connect(self.set_non_actual_tree)
         modele.sig_invalidate.connect(self.set_non_actual_tree)
-        self.sig_actual.connect(self.set_actual_tree)
 
         # таблица факторов
         self.definition_table.setModel(None)
@@ -931,6 +983,9 @@ class MainUI(QMainWindow):
         self.example_table.selectionModel().currentChanged.connect(self.on_ex_select)
 
         # TODO: отображение дерева тоже здесь
+        self.tree_widget.selectionModel().currentChanged.connect(
+            self.mark_button_select
+        )
 
         self._update_buttons()
 
@@ -975,8 +1030,17 @@ class MainUI(QMainWindow):
                 btn.setEnabled(True)
 
     def _update_tree_buttons(self):
+        def check_cond():
+            return self._data is None or TreeController.get(self._data).data is None
+
         self.rebuild_tree_button.setDisabled(self._data is None)
-        self.test_tree_button.setDisabled(self._data is None)
+        self.test_tree_button.setDisabled(check_cond())
+        self.mark_button.setDisabled(
+            check_cond() or not self.tree_widget.currentIndex().isValid()
+        )
+        self.expand_button.setDisabled(check_cond())
+        self.collapse_button.setDisabled(check_cond())
+        self.delete_tree_button.setDisabled(check_cond())
 
     def _update_buttons(self):
         self._update_definitions_buttons()
@@ -1010,14 +1074,30 @@ class MainUI(QMainWindow):
         return self.example_table.model()  # type: ignore
 
     def is_actual_tree(self):
-        return self._tree_is_actual and TreeController.get(self._data).data is not None
+        root = TreeController.get(self._data).data
+        return root is not None and root.actual
 
     @pyqtSlot()
-    def set_actual_tree(self):
-        self._tree_is_actual = True
-        self.actual_label.setText("Дерево актуально")
+    def set_actual_status(self, act: bool, method: MethodType):
+        name = "Optimize" if method == MethodType.optimize else "Left-to-Right"
+        if act:
+            self.actual_label.setText(f"Дерево актуально; метод {name}")
+        else:
+            self.actual_label.setText(f"Дерево не актуально; метод {name}")
 
     @pyqtSlot()
     def set_non_actual_tree(self):
-        self._tree_is_actual = False
-        self.actual_label.setText("Дерево не актуально")
+        root = TreeController.get(self._data).data
+        if root is not None:
+            root.actual = False
+            TreeController.get(self._data).data = root
+            self.set_actual_status(
+                TreeController.get(self._data).data.actual,
+                TreeController.get(self._data).data.method,
+            )
+        else:
+            self.set_none_status()
+
+    @pyqtSlot()
+    def set_none_status(self):
+        self.actual_label.setText("Дерево не построено")

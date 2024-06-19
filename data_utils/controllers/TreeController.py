@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from data_utils.core import DataBase
 from data_utils.imp.tables import AdditionalData
-from tree.TreeClass import _DecisionNode, _LeafNode
+from tree.TreeClass import _DecisionNode, _LeafNode, RootTree
 
 import pickle
 
@@ -19,7 +19,7 @@ class TreeController:
     # байтовое представление дерева правил
     # NOTE: None == не задано
     @property
-    def data(self) -> _DecisionNode | None:
+    def data(self) -> RootTree | None:
         with self._db.session as session:
             byte_tree = DataBase.get_field_by_id(
                 session,
@@ -34,7 +34,7 @@ class TreeController:
 
     # NOTE: None == не задано
     @data.setter
-    def data(self, value: _DecisionNode | None) -> None:
+    def data(self, value: RootTree | None) -> None:
         with self._db.session as session:
             data = self.get_db_table(session)
             data.tree_data = pickle.dumps(value)

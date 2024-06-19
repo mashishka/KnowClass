@@ -2,6 +2,13 @@ import math
 from typing import TypeAlias
 import pandas as pd
 import numpy as np
+from dataclasses import dataclass
+from enum import Enum
+
+
+class MethodType(Enum):
+    left_to_right = "l2r"
+    optimize = "c45"
 
 
 class _DecisionNode:
@@ -9,6 +16,7 @@ class _DecisionNode:
         # Inisialisasi simpul keputusan dengan atribut yang diberikan
         self.attribute = attribute
         self.children = {}  # Menyimpan anak-anak simpul keputusan
+        self.examples_list = []
 
     def depth(self):
         # Menghitung kedalaman simpul keputusan
@@ -46,12 +54,16 @@ class _LeafNode:
         self.label = label
         self.weight = weight
         self.probability = probability
+        self.examples_list = []
 
 
 TreeType: TypeAlias = _DecisionNode | _LeafNode
 
 
-def is_leaf(node: TreeType):
-    if isinstance(node, _DecisionNode):
-        return False
-    return True
+# TODO: проверить, что именно может являться корнем дерева
+# TODO: проверить крайние случаи создания деревьев
+@dataclass
+class RootTree:
+    actual: bool
+    method: MethodType
+    tree: TreeType

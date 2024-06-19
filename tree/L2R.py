@@ -1,4 +1,4 @@
-from tree.TreeClass import _DecisionNode, _LeafNode, is_leaf
+from tree.TreeClass import _DecisionNode, _LeafNode
 
 
 def LeftToRight(df):

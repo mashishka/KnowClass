@@ -138,29 +138,6 @@ def make_dataframe(db: DataBase) -> pd.DataFrame:
         if example.active
     }
 
-    # def get_example_data(example: ExampleController) -> list[ExampleData]:
-    #     res = []
-    #     q = [ExampleData(values=[], id=example.id)]
-    #     while len(q) > 0:
-    #         ex = q.pop()
-    #         pos = len(ex.values)
-    #         if pos == FactorController.get_count(db):
-    #             res.append(ex)
-    #         else:
-    #             factor = FactorController.get_by_position(db, pos)
-    #             val = ExampleController.get(db, ex.id).get_value(factor)
-    #             if val:
-    #                 ex.values.append(val.name)
-    #                 q.append(ex)
-    #             else:
-    #                 values = factor.get_values()
-    #                 for value in values:
-    #                     new_ex = ExampleData(values=ex.values.copy(), id=ex.id)
-    #                     new_ex.values.append(value.name)
-    #                     q.append(new_ex)
-
-    #     return res
-
     def get_example_data(id: int) -> list[ExampleData]:
         ex = ExampleData(values=[], id=id)
         for factor in factors:
@@ -183,9 +160,8 @@ def make_dataframe(db: DataBase) -> pd.DataFrame:
         return res
 
     examples: list[ExampleData] = []
-    with logtime("all get_example_data"):
-        for id in examples_data:
-            examples += get_example_data(id)
+    for id in examples_data:
+        examples += get_example_data(id)
 
     for i, factor in enumerate(factors):
         data[factor.name] = [example.values[i] for example in examples]
@@ -198,13 +174,52 @@ def make_dataframe(db: DataBase) -> pd.DataFrame:
     return df
 
 
-def dfs(tree: TreeType):
-    if isinstance(tree, _LeafNode):
+def zflip_tree(tree: TreeType):
+    res = zflip_tree_rec(tree)
+    if res:
+        # print("zflipped")
+        return res
+    return tree
+
+
+def zflip_tree_rec(
+    tree: TreeType,
+    parent_data: tuple[_DecisionNode, str] | None = None,
+):
+    if not isinstance(tree, _DecisionNode):
         return
-    if isinstance(tree, _DecisionNode):
+    if not tree.children:
         return
 
-    return
+    for k in tree.children:
+        zflip_tree_rec(tree.children[k], (tree, k))
+
+    lists = [v for k, v in tree.children.items() if isinstance(v, list)]
+    if len(lists) != len(tree.children):
+        return
+
+    first = lists[0]
+    first_labels = {leaf.label for leaf in first}
+    for l in lists[1:]:
+        if len(first) != len(l):
+            return
+        value_labels = {leaf.label for leaf in l}
+        if value_labels != first_labels:
+            return
+    if not parent_data:
+        return first
+    parent, pkey = parent_data
+    parent.children[pkey] = first
+
+    # print(
+    #     "change",
+    #     parent_data,
+    #     first,
+    #     tree,
+    #     first_labels,
+    #     pkey,
+    #     parent.attribute,
+    # )
 
 
 def create_tree(db: DataBase, method: MethodType) -> RootTree:
@@ -212,23 +227,16 @@ def create_tree(db: DataBase, method: MethodType) -> RootTree:
     if method == MethodType.optimize:
         model = C45Classifier()
         X = df.drop(["RESULT", "weight"], axis=1)
-        # y = (
-        #     df.index.astype(str)
-        #     + "   _   "
-        #     + df["RESULT"].astype(str)
-        #     + "   _   "
-        #     + df["weight"].astype(str)
-        # )
         y = df["RESULT"].astype(str)
         model.fit(X, y)
         tree = model.tree
-        # print(list(tree.children.values())[0], type(list(tree.children.values())[0]))
     elif method == MethodType.left_to_right:
         tree = LeftToRight(df)
     else:
         raise ValueError("Invalid method. Please choose either 'c45' or 'l2r'.")
 
     # tree = add_nodata(tree, db)
+    tree = zflip_tree(tree)
     tree = alt_add_nodata(tree, db)
     add_examples(tree, db)
 

@@ -116,21 +116,36 @@ class C45Classifier:
             # list_labels = [label.split("   _   ")[1] for label in class_labels]
             return [_LeafNode(label) for label in class_labels]
 
-        # Base case 2: Jika tidak ada atribut lagi yang bisa dipertimbangkan, return simpul daun dengan label mayoritas
-        if len(attributes) == 1:
-            # print(class_labels)
-            # print("_")
-            # probs = [w/np.sum(weights) for w in weights]
-            # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
-            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            # probs = [w / np.sum(list_weights) for w in list_weights]
-            # list_labels = [label.split("   _   ")[1] for label in class_labels]
-            return [_LeafNode(label) for label in class_labels]
+        # # Base case 2: Jika tidak ada atribut lagi yang bisa dipertimbangkan, return simpul daun dengan label mayoritas
+        # if len(attributes) == 1:
+        #     # print(class_labels)
+        #     # print("_")
+        #     # probs = [w/np.sum(weights) for w in weights]
+        #     # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
+        #     # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+        #     # probs = [w / np.sum(list_weights) for w in list_weights]
+        #     # list_labels = [label.split("   _   ")[1] for label in class_labels]
+        #     # print("kekw1", attributes, class_labels)
+        #     attribute_values = set([record[best_attribute] for record in data])
+        #     tree = _DecisionNode(attributes[0])
+        #     for label in class_labels:
+        #         tree.add_child(value, _LeafNode(label))
+        #     return tree
+        #     return [_LeafNode(label) for label in class_labels]
 
         # Memilih atribut terbaik untuk membagi dataset menggunakan algoritma C5.0
-        best_attribute = self.__select_best_attribute_c50(data, attributes, weights)
+        match len(attributes):
+            case 0:
+                return [_LeafNode(label) for label in class_labels]
+            case 1:
+                best_attribute = 0
+            case _:
+                best_attribute = self.__select_best_attribute_c50(
+                    data, attributes, weights
+                )
 
         if best_attribute is None:
+            # print("kekw", attributes)
             # print(class_labels)
             # print("_")
 

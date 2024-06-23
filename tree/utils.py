@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from data_utils.controllers.ExampleController import *
 from data_utils.controllers.TreeController import *
 from data_utils.core import DataBase
@@ -8,6 +9,8 @@ from tree.L2R import LeftToRight
 
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType, MethodType
 import copy
+
+from utils.profile_time import logtime
 
 
 def is_leaf(node: TreeType):
@@ -114,26 +117,94 @@ def completeness(tree: TreeType, db: DataBase) -> list:  # list[int]
 # ==============================================================================
 
 
+@dataclass
+class ExampleData:
+    values: list[str | None]
+    id: int
+
+
 def make_dataframe(db: DataBase) -> pd.DataFrame:
     data = {}
     factors = [
         FactorController.get_by_position(db, i)
         for i in range(FactorController.get_count(db))
     ]
-    examples = [example for example in ExampleController.get_all(db) if example.active]
-    ids = [example.id for example in ExampleController.get_all(db) if example.active]
+    factor_values = [
+        [value.name for value in factor.get_values()] for factor in factors
+    ]
+    examples_data = {
+        example.id: {"result": example.result_value.name, "weight": example.weight}
+        for example in ExampleController.get_all(db)
+        if example.active
+    }
 
-    def get_value_or_none(factor: FactorController, example: ExampleController):
-        val = example.get_value(factor)
-        return val.name if val else val
+    # def get_example_data(example: ExampleController) -> list[ExampleData]:
+    #     res = []
+    #     q = [ExampleData(values=[], id=example.id)]
+    #     while len(q) > 0:
+    #         ex = q.pop()
+    #         pos = len(ex.values)
+    #         if pos == FactorController.get_count(db):
+    #             res.append(ex)
+    #         else:
+    #             factor = FactorController.get_by_position(db, pos)
+    #             val = ExampleController.get(db, ex.id).get_value(factor)
+    #             if val:
+    #                 ex.values.append(val.name)
+    #                 q.append(ex)
+    #             else:
+    #                 values = factor.get_values()
+    #                 for value in values:
+    #                     new_ex = ExampleData(values=ex.values.copy(), id=ex.id)
+    #                     new_ex.values.append(value.name)
+    #                     q.append(new_ex)
 
-    for factor in factors:
-        data[factor.name] = [get_value_or_none(factor, example) for example in examples]
-    data["RESULT"] = [example.result_value.name for example in examples]
-    data["weight"] = [example.weight for example in examples]
-    df = pd.DataFrame(data).fillna("*")
-    df = df.set_index(pd.Index(ids))
+    #     return res
+
+    def get_example_data(id: int) -> list[ExampleData]:
+        ex = ExampleData(values=[], id=id)
+        for factor in factors:
+            val = ExampleController.get(db, ex.id).get_value(factor)
+            ex.values.append(val.name if val else None)
+        res = []
+        q = [ex]
+        while len(q) > 0:
+            ex = q.pop()
+            try:
+                ind = ex.values.index(None)
+            except ValueError:
+                res.append(ex)
+                continue
+            for value in factor_values[ind]:
+                new_ex = ExampleData(values=ex.values.copy(), id=ex.id)
+                new_ex.values[ind] = value
+                q.append(new_ex)
+
+        return res
+
+    examples: list[ExampleData] = []
+    with logtime("all get_example_data"):
+        for id in examples_data:
+            examples += get_example_data(id)
+
+    for i, factor in enumerate(factors):
+        data[factor.name] = [example.values[i] for example in examples]
+
+    data["RESULT"] = [examples_data[ex.id]["result"] for ex in examples]  # type: ignore
+    data["weight"] = [examples_data[ex.id]["weight"] for ex in examples]  # type: ignore
+    df = pd.DataFrame(data)
+    df = df.set_index(pd.Index((example.id for example in examples)))
+    print(df)
     return df
+
+
+def dfs(tree: TreeType):
+    if isinstance(tree, _LeafNode):
+        return
+    if isinstance(tree, _DecisionNode):
+        return
+
+    return
 
 
 def create_tree(db: DataBase, method: MethodType) -> RootTree:
@@ -141,15 +212,17 @@ def create_tree(db: DataBase, method: MethodType) -> RootTree:
     if method == MethodType.optimize:
         model = C45Classifier()
         X = df.drop(["RESULT", "weight"], axis=1)
-        y = (
-            df.index.astype(str)
-            + "   _   "
-            + df["RESULT"].astype(str)
-            + "   _   "
-            + df["weight"].astype(str)
-        )
+        # y = (
+        #     df.index.astype(str)
+        #     + "   _   "
+        #     + df["RESULT"].astype(str)
+        #     + "   _   "
+        #     + df["weight"].astype(str)
+        # )
+        y = df["RESULT"].astype(str)
         model.fit(X, y)
         tree = model.tree
+        # print(list(tree.children.values())[0], type(list(tree.children.values())[0]))
     elif method == MethodType.left_to_right:
         tree = LeftToRight(df)
     else:
@@ -250,6 +323,7 @@ def _gen_id_list(tree: TreeType, examples: list[ExampleController]) -> list[int]
         ]
     if isinstance(tree, _DecisionNode):
         return [example.id for example in examples]
+    raise Exception("unreachable code")
 
 
 # рекурсивно добавить разбиение примеров к узлам и листьям

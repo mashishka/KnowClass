@@ -109,7 +109,8 @@ class ExamplesModel(QAbstractTableModel):
             if role == Qt.BackgroundRole:
                 if index.row() in self.color_list:
                     return self.ex_color
-                return self.default_color
+                # return self.default_color
+                return QVariant()
         return QVariant()
 
     def headerData(self, col, orientation, role):

@@ -1,3 +1,4 @@
+import logging as log
 import math
 import pandas as pd
 import numpy as np
@@ -110,13 +111,10 @@ class C45Classifier:
 
         # Base case 1: Jika semua data memiliki label kelas yang sama, return simpul daun dengan label kelas tersebut
         if len(class_labels) == 1:
-            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            probs = [w / np.sum(list_weights) for w in list_weights]
-            list_labels = [label.split("   _   ")[1] for label in class_labels]
-            return [
-                _LeafNode(label, weight, prob)
-                for label, weight, prob in zip(list_labels, list_weights, probs)
-            ]
+            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            # probs = [w / np.sum(list_weights) for w in list_weights]
+            # list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [_LeafNode(label) for label in class_labels]
 
         # Base case 2: Jika tidak ada atribut lagi yang bisa dipertimbangkan, return simpul daun dengan label mayoritas
         if len(attributes) == 1:
@@ -124,13 +122,10 @@ class C45Classifier:
             # print("_")
             # probs = [w/np.sum(weights) for w in weights]
             # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
-            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            probs = [w / np.sum(list_weights) for w in list_weights]
-            list_labels = [label.split("   _   ")[1] for label in class_labels]
-            return [
-                _LeafNode(label, weight, prob)
-                for label, weight, prob in zip(list_labels, list_weights, probs)
-            ]
+            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            # probs = [w / np.sum(list_weights) for w in list_weights]
+            # list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [_LeafNode(label) for label in class_labels]
 
         # Memilih atribut terbaik untuk membagi dataset menggunakan algoritma C5.0
         best_attribute = self.__select_best_attribute_c50(data, attributes, weights)
@@ -142,13 +137,10 @@ class C45Classifier:
             # return [_LeafNode(label, sum(weights)) for label in class_labels]
             # probs = [w/np.sum(weights) for w in weights]
             # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
-            list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            probs = [w / np.sum(list_weights) for w in list_weights]
-            list_labels = [label.split("   _   ")[1] for label in class_labels]
-            return [
-                _LeafNode(label, weight, prob)
-                for label, weight, prob in zip(list_labels, list_weights, probs)
-            ]
+            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
+            # probs = [w / np.sum(list_weights) for w in list_weights]
+            # list_labels = [label.split("   _   ")[1] for label in class_labels]
+            return [_LeafNode(label) for label in class_labels]
 
         best_attribute_name = attributes[best_attribute]
         tree = _DecisionNode(best_attribute_name)
@@ -160,16 +152,26 @@ class C45Classifier:
                 data, best_attribute, value, weights
             )
 
+            # NOTE: невозможно?
             if len(subset) == 0:
-                # Jika subset kosong, maka buat simpul daun dengan label mayoritas dari data induk dan bobot subset
-                tree.add_child(
-                    value,
-                    _LeafNode(
-                        self.__majority_class(data, weights), sum(subset_weights)
-                    ),
-                )
+                log.error("kekw!!!")
+                #     # Jika subset kosong, maka buat simpul daun dengan label mayoritas dari data induk dan bobot subset
+                #     tree.add_child(
+                #         value,
+                #         _LeafNode(
+                #             self.__majority_class(data, weights), sum(subset_weights)
+                #         ),
+                #     )
             else:
                 # Jika subset tidak kosong, rekursif membangun pohon keputusan menggunakan subset sebagai data dan atribut yang tersisa
+                # children = self.__build_decision_tree(
+                #     subset, attributes, subset_weights
+                # )
+                # if not isinstance(children, list):
+                #     children = [children]
+                # for child in children:
+                #     tree.add_child(value, child)
+
                 tree.add_child(
                     value,
                     self.__build_decision_tree(subset, attributes, subset_weights),

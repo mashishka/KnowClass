@@ -176,7 +176,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.4 alpha")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.5 alpha unstable")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -724,6 +724,30 @@ class MainUI(QMainWindow):
                         tree_print(widg_item, child)
                         root_item.addChild(widg_item)
 
+                # leafs = []
+                # leafs_atr = None
+                # for atr, child in tree.children.items():
+                #     if isinstance(child, _LeafNode):
+                #         leafs.append(child)
+                #         leafs_atr = atr
+                #     else:
+                #         print(tree, tree.children, child)
+                #         widg_item = ExtendedTreeItem(child.examples_list, root_item)
+                #         widg_item.setText(0, f"{atr}: {child.attribute}??")
+
+                #         tree_print(widg_item, child)
+                #         root_item.addChild(widg_item)
+
+                # if leafs:
+                #     tmp_lst = []
+                #     for node in leafs:
+                #         tmp_lst += node.examples_list
+                #     widg_item = ExtendedTreeItem(tmp_lst, root_item)
+                #     widg_item.setText(0, f"{leafs_atr}: ")
+                #     root_item.addChild(widg_item)
+                #     for node in leafs:
+                #         tree_print(widg_item, node)
+
         root_item = ExtendedTreeItem(tree.examples_list, self.tree_widget)
         root_item.setText(0, tree.attribute)
 
@@ -733,7 +757,7 @@ class MainUI(QMainWindow):
 
     # Перестроить дерево
     @pyqtSlot()
-    @error_window
+    # @error_window
     def on_rebuild_tree_button_clicked(self, *args, **kwargs):
         name, done = AskItems.get_item(
             self,

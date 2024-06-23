@@ -49,7 +49,7 @@ class _DecisionNode:
 
 
 class _LeafNode:
-    def __init__(self, label, weight, probability):
+    def __init__(self, label, weight=0, probability=0):
         # Inisialisasi simpul daun dengan label kelas dan bobot yang diberikan
         self.label = label
         self.weight = weight
@@ -57,7 +57,7 @@ class _LeafNode:
         self.examples_list = []
 
 
-TreeType: TypeAlias = _DecisionNode | _LeafNode
+TreeType: TypeAlias = _DecisionNode | _LeafNode | list[_LeafNode]
 
 
 # TODO: проверить, что именно может являться корнем дерева

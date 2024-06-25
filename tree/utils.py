@@ -112,6 +112,37 @@ def completeness(tree: TreeType, db: DataBase) -> list:  # list[int]
     return indices
 
 
+# TODO: оптимизировать обращение к бд
+# возвращает список из id примеров, которых нет в дереве
+def alt_completeness(tree: TreeType, db: DataBase) -> list[int]:  #
+    def is_fit(ex: ExampleController, tree: TreeType) -> bool:
+        if isinstance(tree, _LeafNode):
+            return ex.result_value.name == tree.label
+        if isinstance(tree, list):
+            fit_res: bool = False
+            for leaf in tree:
+                fit_res = fit_res or is_fit(ex, leaf)
+            return fit_res
+
+        cur_factor = FactorController.get(db, tree.attribute)
+        cur_val = ex.get_value(cur_factor)
+        if cur_val is not None:
+            return is_fit(ex, tree.children[cur_val.name])
+        else:
+            for name, child in tree.children.items():
+                if is_fit(ex, child):
+                    return True
+            return False
+
+    all_ex = ExampleController.get_all(db)
+    res: list[int] = []
+    for example in all_ex:
+        if not is_fit(example, tree):
+            res.append(example.id)
+
+    return res
+
+
 # create tree
 # ==============================================================================
 # ==============================================================================
@@ -314,9 +345,9 @@ def add_nodata(tree: TreeType, db: DataBase) -> TreeType:
 # сравнить значение с предлагаемым
 def same_value(value: ValueController | None, chosen: str):
     if value is None:
-        return chosen == "*"
-    if chosen == "*":
-        return False
+        return True
+    # if chosen == "*":
+    #     return False
     return value.name == chosen
 
 
@@ -359,3 +390,33 @@ def add_examples(tree: TreeType, db: DataBase) -> None:
             rec_add(child_node, next_examples)
 
     rec_add(tree, all_exam)
+
+
+# TODO: потенциально огромное время выполнения
+# TODO: можно попробовать сделать ленивые вычисления
+# сортирует детей данного узла в соответствии с порядком в определениях
+def ordered_by_defin(
+    tree: _DecisionNode | list[_LeafNode], db: DataBase
+) -> list[tuple[str, TreeType] | _LeafNode]:
+    if isinstance(tree, _DecisionNode):
+        res: list[tuple[str, TreeType] | _LeafNode] = []
+        vals = [
+            val.name for val in FactorController.get(db, tree.attribute).get_values()
+        ]
+        for val in vals:
+            res.append((val, tree.children[val]))
+        return res
+    if isinstance(tree, list):
+        rc = ResultController.get(db)
+        all_vals = [
+            rc.get_value_by_position(pos).name for pos in range(rc.get_values_count())
+        ]
+        node_vals = [(leaf.label, leaf) for leaf in tree]
+        res = []
+        for res_val in all_vals:
+            if len(res) == len(node_vals):
+                break
+            for label, node in node_vals:
+                if res_val == label:
+                    res.append(node)
+        return res

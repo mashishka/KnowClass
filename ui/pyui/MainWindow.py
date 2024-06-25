@@ -19,7 +19,7 @@ from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
 
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType, MethodType
-from tree.utils import create_tree, completeness
+from tree.utils import create_tree, completeness, alt_completeness, ordered_by_defin
 
 from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
@@ -176,7 +176,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.5 alpha unstable")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.5 alpha unstable 2")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -230,7 +230,14 @@ class MainUI(QMainWindow):
         )
         if done:
             mod = self.get_fact_model()
-            mod.add_factor(name, text)
+            try:
+                mod.add_factor(name, text)
+            except:
+                QMessageBox.critical(
+                    self,
+                    "Создать фактор",
+                    "Ошибка при добавлении фактора:\n\n Такой фактор уже существует!",
+                )
 
     # Добавить значение
     @pyqtSlot()
@@ -249,7 +256,14 @@ class MainUI(QMainWindow):
                 AskType.all,
             )
             if done:
-                mod.add_factor_value(name, text, ind.column())
+                try:
+                    mod.add_factor_value(name, text, ind.column())
+                except:
+                    QMessageBox.critical(
+                        self,
+                        "Создать значение фактора",
+                        "Ошибка при добавлении значения:\n\n Такое значение уже существует!",
+                    )
         # =========================================================
         else:
             name, text, done = AskNameText.get_info(
@@ -259,7 +273,14 @@ class MainUI(QMainWindow):
                 AskType.all,
             )
             if done:
-                mod.add_result_value(name, text)
+                try:
+                    mod.add_result_value(name, text)
+                except:
+                    QMessageBox.critical(
+                        self,
+                        "Создать результат",
+                        "Ошибка при добавлении результата:\n\n Такой результат уже существует!",
+                    )
 
     # Изменить текст
     @pyqtSlot()
@@ -694,7 +715,7 @@ class MainUI(QMainWindow):
 
     # TODO: tree -- какой именно тип?
     # показать дерево
-    def show_tree(self, tree: _DecisionNode):
+    def show_tree(self, tree: TreeType):
         self.tree_widget.setColumnCount(2)
         self.tree_widget.setHeaderLabels(["Rules", "Results"])
 
@@ -706,7 +727,8 @@ class MainUI(QMainWindow):
                 widg_item.setText(1, tree.label)
                 root_item.addChild(widg_item)
             else:
-                for atr, child in tree.children.items():
+                # for atr, child in tree.children.items():
+                for atr, child in ordered_by_defin(tree, self._data):
                     if isinstance(child, list):
                         tmp_lst = []
                         for node in child:
@@ -714,7 +736,7 @@ class MainUI(QMainWindow):
                         widg_item = ExtendedTreeItem(tmp_lst, root_item)
                         widg_item.setText(0, f"{atr}: ")
                         root_item.addChild(widg_item)
-                        for node in child:
+                        for node in ordered_by_defin(child, self._data):
                             tree_print(widg_item, node)
 
                     else:
@@ -724,35 +746,19 @@ class MainUI(QMainWindow):
                         tree_print(widg_item, child)
                         root_item.addChild(widg_item)
 
-                # leafs = []
-                # leafs_atr = None
-                # for atr, child in tree.children.items():
-                #     if isinstance(child, _LeafNode):
-                #         leafs.append(child)
-                #         leafs_atr = atr
-                #     else:
-                #         print(tree, tree.children, child)
-                #         widg_item = ExtendedTreeItem(child.examples_list, root_item)
-                #         widg_item.setText(0, f"{atr}: {child.attribute}??")
-
-                #         tree_print(widg_item, child)
-                #         root_item.addChild(widg_item)
-
-                # if leafs:
-                #     tmp_lst = []
-                #     for node in leafs:
-                #         tmp_lst += node.examples_list
-                #     widg_item = ExtendedTreeItem(tmp_lst, root_item)
-                #     widg_item.setText(0, f"{leafs_atr}: ")
-                #     root_item.addChild(widg_item)
-                #     for node in leafs:
-                #         tree_print(widg_item, node)
+        if isinstance(tree, list):
+            for leaf in ordered_by_defin(tree, self._data):
+                widg_item = ExtendedTreeItem(leaf.examples_list, self.tree_widget)
+                widg_item.setText(1, leaf.label)
+            return
 
         root_item = ExtendedTreeItem(tree.examples_list, self.tree_widget)
-        root_item.setText(0, tree.attribute)
+        if isinstance(tree, _DecisionNode):
+            root_item.setText(0, tree.attribute)
+            tree_print(root_item, tree)
 
-        tree_print(root_item, tree)
-
+        if isinstance(tree, _LeafNode):
+            root_item.setText(1, tree.label)
         self.tree_widget.expandAll()
 
     # Перестроить дерево
@@ -790,7 +796,8 @@ class MainUI(QMainWindow):
     @error_window
     def on_test_tree_button_clicked(self, *args, **kwargs):
         root = TreeController.get(self._data).data
-        marked_list = completeness(root.tree, self._data)
+        # marked_list = completeness(root.tree, self._data)
+        marked_list = alt_completeness(root.tree, self._data)
 
         if len(marked_list) > 0:
             add_str = "\n\nНеподходящие примеры помечены на вкладке Примеры"
@@ -850,10 +857,7 @@ class MainUI(QMainWindow):
     @pyqtSlot(QModelIndex, QModelIndex)
     @error_window
     def mark_button_select(self, ind: QModelIndex, prev: QModelIndex):
-        if ind.isValid():
-            self.mark_button.setEnabled(True)
-        else:
-            self.mark_button.setEnabled(False)
+        self.mark_button.setEnabled(ind.isValid())
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------

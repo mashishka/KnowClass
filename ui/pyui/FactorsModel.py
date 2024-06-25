@@ -148,9 +148,9 @@ class FactorsModel(QAbstractTableModel):
     def add_factor(self, name: str, text: str):
         col = self._factors_count()
 
-        self.beginInsertColumns(QModelIndex(), col, col)
         res = FactorController.make(self._db, name)
         res.text = text
+        self.beginInsertColumns(QModelIndex(), col, col)
         self.endInsertColumns()
 
         # сигнал таблице примеров, чтобы тоже вставила столбец
@@ -163,11 +163,10 @@ class FactorsModel(QAbstractTableModel):
         res_count = res.get_values_count()
         r_cnt = self.rowCount()
 
-        if res_count == r_cnt:
-            self.beginInsertRows(QModelIndex(), res_count, res_count)
         v_res = res.make_value(name)
         v_res.text = text
         if res_count == r_cnt:
+            self.beginInsertRows(QModelIndex(), res_count, res_count)
             self.endInsertRows()
         self.sig_local_invalidate.emit()
 
@@ -178,11 +177,10 @@ class FactorsModel(QAbstractTableModel):
         res_count = res.get_values_count()
         r_cnt = self.rowCount()
 
-        if res_count == r_cnt:
-            self.beginInsertRows(QModelIndex(), res_count, res_count)
         val = res.make_value(name)
         val.text = text
         if res_count == r_cnt:
+            self.beginInsertRows(QModelIndex(), res_count, res_count)
             self.endInsertRows()
         self.sig_local_invalidate.emit()
 

@@ -8,6 +8,7 @@ from data_utils.controllers.ValueController import ValueController
 from data_utils.controllers.ResultController import ResultController
 from data_utils.core import DataBase
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType
+from tree.utils import same_value
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, QItemSelection, Qt
@@ -17,12 +18,12 @@ from ui.pyui.dialogs.AskItems import AskItems
 from ui.pyui.dialogs.AskWorkMode import WorkMode
 
 
-def same_value(value: ValueController | None, chosen: str):
-    if value is None:
-        return chosen == "*"
-    if chosen == "*":
-        return False
-    return value.name == chosen
+# def same_value(value: ValueController | None, chosen: str):
+#     if value is None:
+#         return chosen == "*"
+#     if chosen == "*":
+#         return False
+#     return value.name == chosen
 
 
 @dataclass
@@ -84,7 +85,11 @@ class ConsultDialog(QDialog):
         selected_text = self.ans_list.selectedItems()[0].text()
         selected_name = names[textes.index(selected_text)]
 
-        examples = self.state.examples
+        # examples = self.state.examples
+        examples = [
+            ExampleController.get(self.db, ex_id)
+            for ex_id in self.state.node.examples_list
+        ]
 
         # TODO: использовать примеры напрямую из дерева
         next_examples = [

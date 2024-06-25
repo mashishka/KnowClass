@@ -11,5 +11,5 @@ if __name__ == "__main__":
     log.getLogger().setLevel(log.DEBUG)
     app = QtWidgets.QApplication(sys.argv)
     main = MainUI()
-    main.show()
+    main.showMaximized()
     app.exec_()

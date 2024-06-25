@@ -6,11 +6,12 @@ from tree.TreeClass import _LeafNode, _DecisionNode
 
 
 class C45Classifier:
-    def __init__(self):
+    def __init__(self, lr: bool = False):
         self.tree = None
         self.attributes = None
         self.data = None
         self.weight = 1
+        self.lr = lr
 
     def __calculate_entropy(self, data, weights):
         # Menghitung entropi dari dataset yang diberikan
@@ -84,77 +85,50 @@ class C45Classifier:
 
         return best_attribute
 
-    def __majority_class(self, data, weights):
-        # Menentukan kelas mayoritas pada dataset
-        class_counts = {}
+    # def __majority_class(self, data, weights):
+    #     # Menentukan kelas mayoritas pada dataset
+    #     class_counts = {}
 
-        for i, record in enumerate(data):
-            label = record[-1]
-            weight = weights[i]
+    #     for i, record in enumerate(data):
+    #         label = record[-1]
+    #         weight = weights[i]
 
-            if label not in class_counts:
-                class_counts[label] = 0.0
-            class_counts[label] += weight
+    #         if label not in class_counts:
+    #             class_counts[label] = 0.0
+    #         class_counts[label] += weight
 
-        majority_class = None
-        max_count = 0.0
+    #     majority_class = None
+    #     max_count = 0.0
 
-        for label, count in class_counts.items():
-            if count > max_count:
-                max_count = count
-                majority_class = label
+    #     for label, count in class_counts.items():
+    #         if count > max_count:
+    #             max_count = count
+    #             majority_class = label
 
-        return majority_class
+    #     return majority_class
 
     def __build_decision_tree(self, data, attributes, weights):
         class_labels = set([record[-1] for record in data])
 
         # Base case 1: Jika semua data memiliki label kelas yang sama, return simpul daun dengan label kelas tersebut
         if len(class_labels) == 1:
-            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            # probs = [w / np.sum(list_weights) for w in list_weights]
-            # list_labels = [label.split("   _   ")[1] for label in class_labels]
             return [_LeafNode(label) for label in class_labels]
 
-        # # Base case 2: Jika tidak ada atribut lagi yang bisa dipertimbangkan, return simpul daun dengan label mayoritas
-        # if len(attributes) == 1:
-        #     # print(class_labels)
-        #     # print("_")
-        #     # probs = [w/np.sum(weights) for w in weights]
-        #     # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
-        #     # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-        #     # probs = [w / np.sum(list_weights) for w in list_weights]
-        #     # list_labels = [label.split("   _   ")[1] for label in class_labels]
-        #     # print("kekw1", attributes, class_labels)
-        #     attribute_values = set([record[best_attribute] for record in data])
-        #     tree = _DecisionNode(attributes[0])
-        #     for label in class_labels:
-        #         tree.add_child(value, _LeafNode(label))
-        #     return tree
-        #     return [_LeafNode(label) for label in class_labels]
-
-        # Memilih atribut terbaik untuk membagi dataset menggunakan algoritma C5.0
         match len(attributes):
             case 0:
                 return [_LeafNode(label) for label in class_labels]
             case 1:
                 best_attribute = 0
             case _:
-                best_attribute = self.__select_best_attribute_c50(
-                    data, attributes, weights
-                )
+                if self.lr:
+                    best_attribute = 0
+                else:
+                    # Memilih atribut terbaik untuk membagi dataset menggunakan algoritma C5.0
+                    best_attribute = self.__select_best_attribute_c50(
+                        data, attributes, weights
+                    )
 
         if best_attribute is None:
-            # print("kekw", attributes)
-            # print(class_labels)
-            # print("_")
-
-            # return [_LeafNode(label, sum(weights)) for label in class_labels]
-            # probs = [w/np.sum(weights) for w in weights]
-            # return [_LeafNode(label, weight, prob) for label, weight, prob in zip(class_labels, weights, probs)]
-            # list_weights = [float(label.split("   _   ")[2]) for label in class_labels]
-            # probs = [w / np.sum(list_weights) for w in list_weights]
-            # list_labels = [label.split("   _   ")[1] for label in class_labels]
             return [_LeafNode(label) for label in class_labels]
 
         best_attribute_name = attributes[best_attribute]
@@ -170,23 +144,9 @@ class C45Classifier:
             # NOTE: невозможно?
             if len(subset) == 0:
                 log.error("kekw!!!")
-                #     # Jika subset kosong, maka buat simpul daun dengan label mayoritas dari data induk dan bobot subset
-                #     tree.add_child(
-                #         value,
-                #         _LeafNode(
-                #             self.__majority_class(data, weights), sum(subset_weights)
-                #         ),
-                #     )
+                # Jika subset kosong, maka buat simpul daun dengan label mayoritas dari data induk dan bobot subset
             else:
                 # Jika subset tidak kosong, rekursif membangun pohon keputusan menggunakan subset sebagai data dan atribut yang tersisa
-                # children = self.__build_decision_tree(
-                #     subset, attributes, subset_weights
-                # )
-                # if not isinstance(children, list):
-                #     children = [children]
-                # for child in children:
-                #     tree.add_child(value, child)
-
                 tree.add_child(
                     value,
                     self.__build_decision_tree(subset, attributes, subset_weights),

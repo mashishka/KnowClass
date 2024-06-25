@@ -10,6 +10,8 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, pyqtSignal
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+from data_utils.controllers.FactorController import FactorController
+from data_utils.controllers.ResultController import ResultController
 from ui.pyui.dialogs.AskNameText import AskNameText, AskType
 from ui.pyui.dialogs.AskNumber import AskNumber
 from ui.pyui.dialogs.AskItems import AskItems
@@ -19,7 +21,12 @@ from data_utils.controllers.TreeController import TreeController
 from data_utils.core import DataBase
 
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType, MethodType
-from tree.utils import create_tree, completeness, alt_completeness, ordered_by_defin
+from tree.utils import (
+    create_tree,
+    alt_completeness,
+    get_all_factor_value_names,
+    ordered_by_defin,
+)
 
 from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
@@ -718,6 +725,14 @@ class MainUI(QMainWindow):
     def show_tree(self, tree: TreeType):
         self.tree_widget.setColumnCount(2)
         self.tree_widget.setHeaderLabels(["Rules", "Results"])
+        factor_values = get_all_factor_value_names(self._data)
+        rc = ResultController.get(self._data)
+        result_values = [
+            rc.get_value_by_position(i).name for i in range(rc.get_values_count())
+        ]
+
+        def _ordered_by_defin(tree: _DecisionNode | list[_LeafNode]):
+            return ordered_by_defin(tree, factor_values, result_values)
 
         # это простой метод обхода
         def tree_print(root_item: ExtendedTreeItem, tree: TreeType):
@@ -728,7 +743,7 @@ class MainUI(QMainWindow):
                 root_item.addChild(widg_item)
             else:
                 # for atr, child in tree.children.items():
-                for atr, child in ordered_by_defin(tree, self._data):
+                for atr, child in _ordered_by_defin(tree):
                     if isinstance(child, list):
                         tmp_lst = []
                         for node in child:
@@ -736,7 +751,7 @@ class MainUI(QMainWindow):
                         widg_item = ExtendedTreeItem(tmp_lst, root_item)
                         widg_item.setText(0, f"{atr}: ")
                         root_item.addChild(widg_item)
-                        for node in ordered_by_defin(child, self._data):
+                        for node in _ordered_by_defin(child):
                             tree_print(widg_item, node)
 
                     else:
@@ -747,7 +762,7 @@ class MainUI(QMainWindow):
                         root_item.addChild(widg_item)
 
         if isinstance(tree, list):
-            for leaf in ordered_by_defin(tree, self._data):
+            for leaf in _ordered_by_defin(tree):
                 widg_item = ExtendedTreeItem(leaf.examples_list, self.tree_widget)
                 widg_item.setText(1, leaf.label)
             return

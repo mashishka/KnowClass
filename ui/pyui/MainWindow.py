@@ -38,7 +38,6 @@ from ui.pyui.utils import error_window, ExtendedTreeItem
 
 # TODO: обработка ошибок валидации
 # TODO: обработка отмены открытия файла/не существования файла
-# TODO: сделать свои нормальные классы диалогов (с нормальными размерами)
 class MainUI(QMainWindow):
     # ui
     file_open_action: QAction
@@ -172,7 +171,9 @@ class MainUI(QMainWindow):
         if self.is_actual_tree():
             mode, done, val = AskWorkMode.get_mode(self)
             if done:
-                ConsultDialog(self, self._data, mode, val).exec_()
+                cons = ConsultDialog(self, self._data, mode, val)
+                if cons.check_before_exec():
+                    cons.exec_()
 
         else:
             QMessageBox.warning(
@@ -183,7 +184,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.5 alpha unstable 2")
+        QMessageBox.about(self, "О программе", "2ndClass v0.9.6 alpha CR")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
@@ -250,7 +251,6 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_add_value(self):
-        # TODO: сделать адаптивные названия у диалогов (в зависимости от выбора)
         ind = self.definition_table.currentIndex()
         mod = self.get_fact_model()
         fact_cnt = mod._factors_count()
@@ -571,7 +571,6 @@ class MainUI(QMainWindow):
         if cur_ind.column() < f_cnt:
             # изменить значение фактора
             f_name, val_list = mod.get_list_fact_val(cur_ind.column())
-            # TODO: в таких диалогах чекать возвращаемое имя -- он позволяет вернуть любую строку
 
             name, done = AskItems.get_item(
                 self,
@@ -720,7 +719,6 @@ class MainUI(QMainWindow):
         else:
             self.set_none_status()
 
-    # TODO: tree -- какой именно тип?
     # показать дерево
     def show_tree(self, tree: TreeType):
         self.tree_widget.setColumnCount(2)
@@ -909,8 +907,6 @@ class MainUI(QMainWindow):
         self.move_example_button.clicked.connect(self.on_move_example)
         self.delete_example_button.clicked.connect(self.on_delete_example)
 
-        # TODO: connect Tree buttons
-
     # безопасно закрыть текущую базу
     def _close_kb(self):
         self.definition_table.setModel(None)
@@ -1025,7 +1021,6 @@ class MainUI(QMainWindow):
         self.example_table.setModel(modele)
         self.example_table.selectionModel().currentChanged.connect(self.on_ex_select)
 
-        # TODO: отображение дерева тоже здесь
         self.tree_widget.selectionModel().currentChanged.connect(
             self.mark_button_select
         )

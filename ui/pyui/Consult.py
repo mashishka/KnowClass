@@ -8,7 +8,7 @@ from data_utils.controllers.ValueController import ValueController
 from data_utils.controllers.ResultController import ResultController
 from data_utils.core import DataBase
 from tree.TreeClass import _DecisionNode, _LeafNode, TreeType
-from tree.utils import same_value
+from tree.utils import recalc_stat
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, QItemSelection, Qt
@@ -91,14 +91,30 @@ class ConsultDialog(QDialog):
             for ex_id in self.state.node.examples_list
         ]
 
-        # TODO: использовать примеры напрямую из дерева
-        next_examples = [
-            example
-            for example in examples
-            if same_value(example.get_value(self.setup_state.factor), selected_name)
-        ]
+        # next_examples = [
+        #     example
+        #     for example in examples
+        #     if same_value(
+        #         example.get_value(self.setup_state.factor).name, selected_name
+        #     )
+        # ]
+
+        next_node: TreeType = self.state.node.children[selected_name]
+        if isinstance(next_node, (_DecisionNode, _LeafNode)):
+            next_examples = [
+                ExampleController.get(self.db, ex_id)
+                for ex_id in next_node.examples_list
+            ]
+        if isinstance(next_node, list):
+            next_examples = []
+            for leaf in next_node:
+                next_examples += [
+                    ExampleController.get(self.db, ex_id)
+                    for ex_id in leaf.examples_list
+                ]
+
         self.state = TreeConsultState(
-            node=self.state.node.children[selected_name],
+            node=next_node,
             examples=next_examples,
         )
         self._next_state()
@@ -124,7 +140,14 @@ class ConsultDialog(QDialog):
             self.ans_list.addItem(item)
 
     def show_result(self, leafs: list[_LeafNode]):
+        if "no-data" in [leaf.label for leaf in leafs]:
+            QMessageBox.information(
+                self, "Результат консультации", "Нет информации об этой ситуации"
+            )
+            self.accept()
+            return
         result_list = []
+        recalc_stat(leafs)
 
         def sort_key(elem: _LeafNode):
             return (
@@ -162,7 +185,6 @@ class ConsultDialog(QDialog):
         node = self.state.node
         examples = self.state.examples
 
-        # TODO: проверить пересчёт весов
         def correct_leaf(leaf: _LeafNode):
             examples_ = [
                 example.weight
@@ -170,7 +192,7 @@ class ConsultDialog(QDialog):
                 if example.result_value.name == leaf.label
             ]
             leaf.weight = sum(examples_)
-            leaf.probability *= len(examples_)
+            # leaf.probability *= len(examples_)
 
         if isinstance(node, _DecisionNode):
             self.setup(node.attribute, list(node.children.keys()))
@@ -188,3 +210,6 @@ class ConsultDialog(QDialog):
         for subnode in unique_subnodes:
             correct_leaf(subnode)
         self.show_result(unique_subnodes)
+
+    def check_before_exec(self) -> bool:
+        return isinstance(self.state.node, _DecisionNode)

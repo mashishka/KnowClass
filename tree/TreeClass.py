@@ -60,8 +60,6 @@ class _LeafNode:
 TreeType: TypeAlias = _DecisionNode | _LeafNode | list[_LeafNode]
 
 
-# TODO: проверить, что именно может являться корнем дерева
-# TODO: проверить крайние случаи создания деревьев
 @dataclass
 class RootTree:
     actual: bool

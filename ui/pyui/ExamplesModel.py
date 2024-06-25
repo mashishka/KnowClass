@@ -47,7 +47,6 @@ class ExamplesModel(QAbstractTableModel):
         self.columnCount = cached(self._cache, "columnCount")(self.columnCount)
 
         # инвалидация кеша при изменении
-        # TODO: не только эти? (например, добавление, всякие изменения)
         invalidate_signals = [
             self.dataChanged,
             self.headerDataChanged,

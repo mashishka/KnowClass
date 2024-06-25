@@ -281,7 +281,8 @@ def ordered_by_defin(
     if isinstance(tree, list):
         node_vals = [(leaf.label, leaf) for leaf in tree]
         res = []
-        for res_val in result_values:
+        local_res_vals = result_values + ["no-data"]
+        for res_val in local_res_vals:
             if len(res) == len(node_vals):
                 break
             for label, node in node_vals:
@@ -298,3 +299,14 @@ def get_all_factor_value_names(db: DataBase) -> dict[str, list[str]]:
         ]
         for factor in FactorController.get_all(db)
     }
+
+
+def recalc_stat(leafs: list[_LeafNode]):
+    if len(leafs) == 1:
+        leafs[0].probability = 1.0
+        leafs[0].weight /= len(leafs[0].examples_list)
+        return
+    all_weight = sum([leaf.weight for leaf in leafs])
+    for leaf in leafs:
+        leaf.probability = leaf.weight / all_weight
+        leaf.weight /= len(leaf.examples_list)

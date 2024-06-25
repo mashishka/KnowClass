@@ -769,10 +769,16 @@
    <property name="text">
     <string>Открыть</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="file_create_action">
    <property name="text">
     <string>Создать</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="file_exit_action">
@@ -790,6 +796,9 @@
    <property name="shortcut">
     <string>Ctrl+S</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="help_about_action">
    <property name="text">
@@ -804,6 +813,9 @@
   <action name="file_close_action">
    <property name="text">
     <string>Закрыть</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
  </widget>

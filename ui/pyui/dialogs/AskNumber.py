@@ -26,7 +26,7 @@ class AskNumber(QDialog):
         ask_text: str,
         mode: AskNumberType,
         cur_num: int | float | None = None,
-        min: int | None = None,
+        min: int | float | None = None,
     ):
         super().__init__(parent)
         loadUi("ui/widgets/dialogs/ask_number.ui", self)
@@ -34,8 +34,10 @@ class AskNumber(QDialog):
         self.setWindowTitle(title)
         self.ask_label.setText(ask_text)
 
-        if min is not None:
+        if isinstance(min, int):
             self.int_field.setMinimum(min)
+        if isinstance(min, float):
+            self.double_field.setMinimum(min)
 
         self.cur_num = cur_num
 
@@ -63,8 +65,14 @@ class AskNumber(QDialog):
 
     @staticmethod
     def get_double(
-        parent, title: str, ask_text: str, cur_num: int | float | None = None
+        parent,
+        title: str,
+        ask_text: str,
+        cur_num: int | float | None = None,
+        min: float | None = None,
     ):
-        dlg = AskNumber(parent, title, ask_text, AskNumberType.only_double, cur_num)
+        dlg = AskNumber(
+            parent, title, ask_text, AskNumberType.only_double, cur_num, min
+        )
         done = dlg.exec_() == QDialog.Accepted
         return dlg.double_field.value(), done

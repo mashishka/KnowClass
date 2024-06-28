@@ -727,7 +727,7 @@
      </font>
     </property>
     <property name="title">
-     <string>Файл</string>
+     <string>&amp;Файл</string>
     </property>
     <widget class="QMenu" name="file_last_menu">
      <property name="title">
@@ -750,13 +750,13 @@
      </font>
     </property>
     <property name="title">
-     <string>Справка</string>
+     <string>&amp;Справка</string>
     </property>
     <addaction name="help_about_action"/>
    </widget>
    <widget class="QMenu" name="consult_menu">
     <property name="title">
-     <string>Консультация</string>
+     <string>&amp;Консультация</string>
     </property>
     <addaction name="consult_run_action"/>
    </widget>
@@ -767,7 +767,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="file_open_action">
    <property name="text">
-    <string>Открыть</string>
+    <string>&amp;Открыть</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -775,7 +775,7 @@
   </action>
   <action name="file_create_action">
    <property name="text">
-    <string>Создать</string>
+    <string>&amp;Создать</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -783,7 +783,7 @@
   </action>
   <action name="file_exit_action">
    <property name="text">
-    <string>Выход</string>
+    <string>&amp;Выход</string>
    </property>
   </action>
   <action name="file_save_action">
@@ -802,17 +802,17 @@
   </action>
   <action name="help_about_action">
    <property name="text">
-    <string>О программе</string>
+    <string>О &amp;программе</string>
    </property>
   </action>
   <action name="consult_run_action">
    <property name="text">
-    <string>Начать консультацию</string>
+    <string>&amp;Начать консультацию</string>
    </property>
   </action>
   <action name="file_close_action">
    <property name="text">
-    <string>Закрыть</string>
+    <string>&amp;Закрыть</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>

@@ -302,11 +302,16 @@ def get_all_factor_value_names(db: DataBase) -> dict[str, list[str]]:
 
 
 def recalc_stat(leafs: list[_LeafNode]):
+    all_weight = sum([leaf.weight for leaf in leafs])
+    if all_weight <= 0.00000000001:
+        for leaf in leafs:
+            leaf.probability = 0.0
+            leaf.weight = 0.0
+        return
     if len(leafs) == 1:
         leafs[0].probability = 1.0
         leafs[0].weight /= len(leafs[0].examples_list)
         return
-    all_weight = sum([leaf.weight for leaf in leafs])
     for leaf in leafs:
         leaf.probability = leaf.weight / all_weight
         leaf.weight /= len(leaf.examples_list)

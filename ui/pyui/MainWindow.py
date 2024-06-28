@@ -135,7 +135,8 @@ class MainUI(QMainWindow):
         )
 
         if file_path != "":
-            file_path = PurePath(file_path + ".db")
+            ext_file_path = file_path if "." in file_path else file_path + ".db"
+            file_path = PurePath(ext_file_path)
 
             self._data = DataBase.create(file_path)
             self._open_kb(file_path)
@@ -586,10 +587,7 @@ class MainUI(QMainWindow):
         elif cur_ind.column() == f_cnt:
             # изменить вес примера
             weight, done = AskNumber.get_double(
-                self,
-                f"Вес примера",
-                "Выберите значение веса для примера:",
-                1.0,
+                self, f"Вес примера", "Выберите значение веса для примера:", 1.0, 0.0
             )
             if done:
                 mod.change_ex_weight(cur_ind.row(), weight)
@@ -776,7 +774,7 @@ class MainUI(QMainWindow):
 
     # Перестроить дерево
     @pyqtSlot()
-    # @error_window
+    @error_window
     def on_rebuild_tree_button_clicked(self, *args, **kwargs):
         name, done = AskItems.get_item(
             self,
@@ -1112,6 +1110,8 @@ class MainUI(QMainWindow):
         return self.example_table.model()  # type: ignore
 
     def is_actual_tree(self):
+        if self._data is None:
+            return False
         root = TreeController.get(self._data).data
         return root is not None and root.actual
 

@@ -3,6 +3,8 @@ from enum import Enum
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+import ui.pyui.ui_path as ui_path
+
 
 class WorkMode(Enum):
     probability = "prob"
@@ -22,7 +24,7 @@ class AskWorkMode(QDialog):
 
     def __init__(self, parent):
         super().__init__(parent)
-        loadUi("ui/widgets/dialogs/ask_work_mode.ui", self)
+        loadUi(ui_path.PATH_TO_UI + "/dialogs/ask_work_mode.ui", self)
 
         self.hidden_frame.setVisible(False)
         self.resize(self.width(), 5)

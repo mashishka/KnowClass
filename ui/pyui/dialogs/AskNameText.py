@@ -5,6 +5,8 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, pyqtSignal
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+import ui.pyui.ui_path as ui_path
+
 
 class AskType(Enum):
     only_name = "o_n"
@@ -30,7 +32,7 @@ class AskNameText(QDialog):
         cur_text: str | None = None,
     ):
         super().__init__(parent)
-        loadUi("ui/widgets/dialogs/ask_factor.ui", self)
+        loadUi(ui_path.PATH_TO_UI + "/dialogs/ask_factor.ui", self)
 
         self.setWindowTitle(title)
         self.text_label.setText(ask_text)

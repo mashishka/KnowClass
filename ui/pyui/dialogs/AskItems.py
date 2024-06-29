@@ -5,6 +5,8 @@ from PyQt5.QtCore import pyqtSlot, QDir, QSettings, QModelIndex, pyqtSignal
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 
+import ui.pyui.ui_path as ui_path
+
 
 class AskItems(QDialog):
     ask_label: QLabel
@@ -15,7 +17,7 @@ class AskItems(QDialog):
 
     def __init__(self, parent, title: str, ask_text: str, items: list[str]):
         super().__init__(parent)
-        loadUi("ui/widgets/dialogs/ask_items.ui", self)
+        loadUi(ui_path.PATH_TO_UI+"/dialogs/ask_items.ui", self)
 
         self.setWindowTitle(title)
         self.ask_label.setText(ask_text)

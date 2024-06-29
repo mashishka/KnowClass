@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi  # type: ignore
 from ui.pyui.dialogs.AskItems import AskItems
 from ui.pyui.dialogs.AskWorkMode import WorkMode
-
+import ui.pyui.ui_path as ui_path
 
 # def same_value(value: ValueController | None, chosen: str):
 #     if value is None:
@@ -56,7 +56,7 @@ class ConsultDialog(QDialog):
         super(ConsultDialog, self).__init__(parent)
         self.selected = False
 
-        loadUi("ui/widgets/consult.ui", self)
+        loadUi(ui_path.PATH_TO_UI+"/consult.ui", self)
         self.setup_state: SetupState
 
         self.db = db

@@ -4,3 +4,6 @@
 venv
 .venv
 settings.ini
+build
+dist
+main_top.spec

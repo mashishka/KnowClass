@@ -1,0 +1,1 @@
+echo "--add-data $1;$(dirname $1)"

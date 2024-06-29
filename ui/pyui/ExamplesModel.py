@@ -174,7 +174,7 @@ class ExamplesModel(QAbstractTableModel):
     def get_list_fact_val(self, col: int):
         factor = FactorController.get_by_position(self._db, col)
         val_list: list[str] = []  # type: ignore
-        val_list.append("")
+        val_list.append("*")
         val_list += [res_val.name for res_val in factor.get_values()]
         return factor.name, val_list
 
@@ -208,7 +208,7 @@ class ExamplesModel(QAbstractTableModel):
     def change_factor_val(self, ex_position: int, fact_name: str, val_name: str):
         cur_ex = ExampleController.get_by_position(self._db, ex_position)
         factor = FactorController.get(self._db, fact_name)
-        if val_name == "":
+        if val_name == "*":
             # выбрали "неважно" (*)
             if cur_ex.get_value(factor) is not None:
                 cur_ex.remove_value(factor)

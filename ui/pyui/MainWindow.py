@@ -31,10 +31,10 @@ from tree.utils import (
 from ui.pyui.Consult import ConsultDialog
 from ui.pyui.ExamplesModel import ExamplesModel
 from ui.pyui.FactorsModel import FactorsModel
+import ui.pyui.ui_path as ui_path
 from ui.pyui.utils import error_window, ExtendedTreeItem
 
 # from treelib import Node, Tree  # type: ignore
-
 
 # TODO: обработка ошибок валидации
 # TODO: обработка отмены открытия файла/не существования файла
@@ -96,7 +96,8 @@ class MainUI(QMainWindow):
 
     def __init__(self):
         QMainWindow.__init__(self)
-        loadUi("ui/widgets/main.ui", self)  # ui/widgets/Fake.iu
+
+        loadUi(ui_path.PATH_TO_UI + "/main.ui", self)  # ui/widgets/Fake.iu
 
         # механика активности факторов/примеров не реализуется
         self.activate_factor_button.setVisible(False)

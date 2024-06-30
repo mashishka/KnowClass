@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>2ndClass</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../../res/icon.ico</normaloff>../../res/icon.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="0">
@@ -723,6 +727,7 @@
    <widget class="QMenu" name="file_menu">
     <property name="font">
      <font>
+      <family>Tahoma</family>
       <pointsize>10</pointsize>
      </font>
     </property>
@@ -746,6 +751,7 @@
    <widget class="QMenu" name="help_menu">
     <property name="font">
      <font>
+      <family>Tahoma</family>
       <pointsize>10</pointsize>
      </font>
     </property>

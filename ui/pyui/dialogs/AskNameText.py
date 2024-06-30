@@ -55,10 +55,10 @@ class AskNameText(QDialog):
     @pyqtSlot()
     def try_accept(self):
         fact_name = self.name_edit.text()
-        if fact_name != "" or self.cur_text is not None:
+        if (fact_name != "" and fact_name != "*") or self.cur_text is not None:
             self.accept()
         else:
-            QMessageBox.warning(self, self.windowTitle(), "Имя не должно быть пустым!")
+            QMessageBox.warning(self, self.windowTitle(), "Недопустимое имя!")
 
     @staticmethod
     def get_info(

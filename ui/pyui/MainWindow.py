@@ -36,6 +36,7 @@ from ui.pyui.utils import error_window, ExtendedTreeItem
 
 # from treelib import Node, Tree  # type: ignore
 
+
 # TODO: обработка ошибок валидации
 # TODO: обработка отмены открытия файла/не существования файла
 class MainUI(QMainWindow):
@@ -186,7 +187,7 @@ class MainUI(QMainWindow):
     @pyqtSlot()
     @error_window
     def on_about(self):
-        QMessageBox.about(self, "О программе", "2ndClass v0.9.6 alpha CR")
+        QMessageBox.about(self, "О программе", "2ndClass v1.0.0")
 
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------

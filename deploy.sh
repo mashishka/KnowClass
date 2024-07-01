@@ -1,1 +1,1 @@
-.venv/Scripts/python.exe -m PyInstaller --noconsole --icon res/icon.ico -F main_top.py $(find ./ui -name "*.ui" -exec ./utils/gen_add_data.sh {} \;) --add-data "res/icon.ico;res"
+.venv/Scripts/python.exe -m PyInstaller --noconsole --icon res/icon.ico -F main_top.py $(find ./ui -name "*.ui" -exec ./utils/gen_add_data.sh {} \;) --add-data "res/icon.png;res"
